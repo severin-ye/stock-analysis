@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NVDA — 综合投资分析报告</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--navy:#0f172a;--blue:#2563eb;--blue-l:#3b82f6;--green:#059669;--red:#dc2626;--amber:#d97706;--slate:#64748b;--border:#e2e8f0;--bg:#f8fafc;--white:#fff;--text:#0f172a;--muted:#94a3b8;--r:8px;--sh:0 1px 3px rgba(0,0,0,.06)}
+html{scroll-behavior:smooth}
+body{font-family:-apple-system,BlinkMacSystemFont,'Inter','Helvetica Neue','PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);font-size:13px;line-height:1.6}
+.layout{display:flex;min-height:100vh}
+.sidebar{width:220px;flex-shrink:0;background:var(--navy);position:fixed;top:0;left:0;height:100vh;overflow-y:auto;z-index:100}
+.main{margin-left:220px;flex:1}
+.inner{max-width:900px;margin:0 auto;padding:32px 32px 80px}
+.sidebar-logo{padding:24px 20px 16px;border-bottom:1px solid rgba(255,255,255,.07)}
+.sidebar-logo .ticker{font-size:22px;font-weight:700;color:#fff;letter-spacing:-.5px}
+.sidebar-logo .name{font-size:11px;color:var(--muted);margin-top:2px}
+.sidebar-score{padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.07)}
+.score-pill{display:inline-flex;align-items:center;gap:8px;background:rgba(37,99,235,.25);border:1px solid rgba(59,130,246,.4);border-radius:20px;padding:6px 14px;color:#93c5fd;font-size:12px;font-weight:600}
+.score-pill .num{font-size:18px;font-weight:700;color:#fff}
+.sidebar nav{padding:12px 0 24px}
+.nav-gl{padding:6px 20px 4px;font-size:10px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;color:rgba(148,163,184,.5)}
+.nav-link{display:flex;align-items:center;gap:8px;padding:7px 20px;color:rgba(148,163,184,.85);text-decoration:none;font-size:12px;transition:background .15s,color .15s;border-left:2px solid transparent}
+.nav-link:hover{background:rgba(255,255,255,.05);color:#fff;border-left-color:var(--blue-l)}
+.nav-link .dot{width:6px;height:6px;border-radius:50%;background:var(--muted);flex-shrink:0}
+.bull .dot{background:var(--green)} .bear .dot{background:var(--red)} .neut .dot{background:var(--amber)}
+.cover{background:linear-gradient(135deg,#0f172a 0%,#1a3a52 55%,#0d6e3f 100%);border-radius:var(--r);padding:40px 40px 36px;margin-bottom:24px;position:relative;overflow:hidden;color:#fff}
+.cover::before{content:'NVDA';position:absolute;right:-16px;top:-8px;font-size:140px;font-weight:800;letter-spacing:-8px;opacity:.05;pointer-events:none}
+.cover-label{display:inline-block;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.15);border-radius:4px;padding:2px 10px;font-size:10px;font-weight:600;letter-spacing:.7px;text-transform:uppercase;color:#6ee7b7;margin-bottom:14px}
+.cover h1{font-size:28px;font-weight:700;line-height:1.2;margin-bottom:4px}
+.cover .exchange{font-size:13px;color:rgba(148,163,184,.8);margin-bottom:28px}
+.kpi-strip{display:flex;gap:28px;flex-wrap:wrap}
+.kpi-strip .k label{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:rgba(148,163,184,.7);margin-bottom:3px}
+.kpi-strip .k span{font-size:20px;font-weight:700;color:#fff}
+.kpi-strip .k small{font-size:11px;color:rgba(148,163,184,.7);margin-left:4px}
+.card{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:28px;margin-bottom:20px;box-shadow:var(--sh);scroll-margin-top:24px}
+.card-header{display:flex;align-items:center;gap:10px;padding-bottom:18px;margin-bottom:20px;border-bottom:1px solid var(--border)}
+.card-num{width:26px;height:26px;border-radius:6px;background:var(--navy);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.card-title{font-size:15px;font-weight:700;color:var(--text)}
+.card-sub{font-size:12px;color:var(--slate);margin-left:auto}
+.card h3{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--slate);margin:20px 0 10px}
+.card h3:first-of-type{margin-top:0}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin:14px 0}
+.kpi-card{background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:14px}
+.kpi-card label{display:block;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);margin-bottom:4px}
+.kpi-card .v{font-size:20px;font-weight:700;color:var(--text);line-height:1}
+.kpi-card .c{font-size:11px;color:var(--slate);margin-top:3px}
+.t-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:6px;margin:12px 0}
+table{width:100%;border-collapse:collapse;font-size:12px}
+thead{background:var(--bg)}
+th{padding:9px 12px;text-align:left;font-size:10px;font-weight:600;letter-spacing:.4px;text-transform:uppercase;color:var(--slate);border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:9px 12px;border-bottom:1px solid #f1f5f9}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#fafbff}
+.up{color:var(--green);font-weight:600} .dn{color:var(--red);font-weight:600} .nu{color:var(--amber);font-weight:600} .hi{background:#f0fdf4}
+.tags{display:flex;flex-wrap:wrap;gap:5px;margin:8px 0}
+.tag{border-radius:4px;padding:2px 8px;font-size:11px;font-weight:500}
+.tg{background:#dcfce7;color:#166534} .tr{background:#fee2e2;color:#991b1b} .ta{background:#fef3c7;color:#92400e} .tb{background:#dbeafe;color:#1e40af}
+.bars{display:flex;flex-direction:column;gap:8px;margin:10px 0}
+.bar-row{display:flex;align-items:center;gap:10px}
+.bar-row .bl{min-width:150px;font-size:12px;color:var(--text)}
+.bar-row .btr{flex:1;height:6px;background:#e2e8f0;border-radius:3px;overflow:hidden}
+.bar-row .bfill{height:100%;border-radius:3px}
+.bar-row .bv{min-width:52px;text-align:right;font-size:11px;font-weight:600;color:var(--slate)}
+.chart-wrap{position:relative;margin:16px 0}
+.chart-wrap canvas{max-height:260px}
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin:16px 0}
+@media(max-width:680px){.chart-grid{grid-template-columns:1fr}}
+.signal{border:1.5px solid var(--blue);border-radius:8px;overflow:hidden;margin-top:22px}
+.signal-head{background:var(--navy);padding:9px 18px;font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#93c5fd;text-align:center}
+.signal-rows{display:grid;grid-template-columns:1fr 1fr}
+.sr{padding:9px 16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.sr:nth-child(odd){background:var(--bg)}
+.sr label{font-size:10px;text-transform:uppercase;letter-spacing:.4px;color:var(--muted)}
+.sr span{font-size:12px;font-weight:700}
+.signal-foot{background:var(--bg);padding:8px 16px;font-size:10px;color:var(--muted);text-align:center;border-top:1px solid var(--border)}
+.verdict{background:var(--navy);border-radius:10px;padding:28px 32px;color:#fff;margin-top:24px}
+.verdict h2{font-size:18px;font-weight:700;margin-bottom:20px;color:#fff}
+.verdict-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.verdict ul{padding-left:16px;line-height:2;font-size:12px;color:#cbd5e1}
+.verdict-score{display:flex;align-items:center;justify-content:center;flex-direction:column;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:24px;text-align:center}
+.verdict-score .big{font-size:52px;font-weight:800;color:#60a5fa;line-height:1}
+.verdict-score .lbl{font-size:11px;color:#94a3b8;margin-top:6px;text-transform:uppercase;letter-spacing:.5px}
+.verdict-score .rec{margin-top:12px;background:rgba(37,99,235,.4);border-radius:20px;padding:4px 14px;font-size:12px;font-weight:600;color:#93c5fd}
+.note{background:#fffbeb;border-left:3px solid var(--amber);border-radius:0 6px 6px 0;padding:10px 14px;font-size:11px;color:#78350f;margin-top:14px}
+footer{text-align:center;padding:16px 0 32px;font-size:11px;color:var(--muted)}
+.sidebar::-webkit-scrollbar{width:4px}
+.sidebar::-webkit-scrollbar-thumb{background:rgba(255,255,255,.15);border-radius:2px}
+@media(max-width:760px){.sidebar{position:static;width:100%;height:auto}.layout{display:block}.main{margin-left:0}.inner{padding:20px}.chart-grid,.verdict-grid{grid-template-columns:1fr}.signal-rows{grid-template-columns:1fr}}
+@media print{.sidebar{display:none}.main{margin-left:0}.inner{max-width:none;padding:18px}.card{break-inside:avoid;box-shadow:none}.cover{break-inside:avoid}body{background:#fff}}
+</style>
+</head>
+<body>
+<div class="layout">
+<aside class="sidebar">
+  <div class="sidebar-logo"><div class="ticker">NVDA</div><div class="name">NVIDIA Corporation · 英伟达</div></div>
+  <div class="sidebar-score"><div class="score-pill"><span class="num">8.3</span>/ 10 &nbsp;综合评分</div></div>
+  <nav>
+    <div class="nav-gl">分析章节</div>
+    <a class="nav-link bull" href="#s1"><span class="dot"></span>S1. 涨跌比例总览</a>
+    <a class="nav-link bull" href="#s2"><span class="dot"></span>S2. 公司概览</a>
+    <a class="nav-link bull" href="#s3"><span class="dot"></span>S3. 过去一年走势</a>
+    <a class="nav-link bull" href="#s4"><span class="dot"></span>S4. 竞争格局</a>
+    <a class="nav-link bull" href="#s5"><span class="dot"></span>S5. 估值分析</a>
+    <a class="nav-link bull" href="#s6"><span class="dot"></span>S6. 未来一年展望</a>
+    <a class="nav-link neut" href="#s7"><span class="dot"></span>S7. 风险矩阵</a>
+    <a class="nav-link bull" href="#s8"><span class="dot"></span>S8. 投资信号</a>
+    <div class="nav-gl" style="margin-top:8px">结论</div>
+    <a class="nav-link" href="#verdict"><span class="dot" style="background:#60a5fa"></span>最终裁决</a>
+  </nav>
+</aside>
+<main class="main"><div class="inner">
+
+<!-- ═══════════ COVER ═══════════ -->
+<div class="cover">
+  <div class="cover-label">InvestSkill v1.6.0 · 综合投资分析报告</div>
+  <h1>NVDA — 全球AI算力之王</h1>
+  <div class="exchange">分析日期 2026-05-10 | 当前价格: $215.20 | 市值: $5.23万亿</div>
+  <div class="kpi-strip">
+    <div class="k"><label>营收增速</label><span>+65.5%</span><small>YoY</small></div>
+    <div class="k"><label>毛利率</label><span>75.0%</span></div>
+    <div class="k"><label>Forward PE</label><span>25.8x</span></div>
+    <div class="k"><label>PEG</label><span>0.66</span><small>低估</small></div>
+    <div class="k"><label>YTD</label><span style="color:#6ee7b7">+15.3%</span></div>
+    <div class="k"><label>目标价</label><span style="color:#93c5fd">$275</span><small>+28%</small></div>
+  </div>
+</div>
+
+<!-- ═══════════ S1: 涨跌比例总览 ═══════════ -->
+<div class="card" id="s1">
+  <div class="card-header"><div class="card-num">1</div><div class="card-title">📊 涨跌比例总览</div><div class="card-sub">整体分析 · 百分比优先</div></div>
+  <div class="t-wrap">
+    <table>
+      <thead><tr><th>维度</th><th>涨跌比例</th><th>对应价格/估值</th><th>概率权重</th><th>行业对比</th></tr></thead>
+      <tbody>
+        <tr><td>YTD 2026</td><td class="up">+15.3%</td><td>$186.50 → $215.20</td><td>已实现</td><td>半导体均值 +8%</td></tr>
+        <tr><td>1年回报 (TTM)</td><td class="up">+98.8%</td><td>~$101.5 → $215.20</td><td>已实现</td><td>行业均值 +25%</td></tr>
+        <tr><td>分析师目标价</td><td class="up">+27.8%</td><td>$215 → $275</td><td>60% 概率</td><td>—</td></tr>
+        <tr><td>DCF 内在价值 (保守)</td><td class="up">+15~25%</td><td>$215 → $247~$269</td><td>50% 概率</td><td>—</td></tr>
+        <tr><td>乐观情景 (FY2028)</td><td class="up">+40~80%</td><td>$215 → $300~$380</td><td>25% 概率</td><td>—</td></tr>
+        <tr><td>下行风险 (熊市)</td><td class="dn">-20~-35%</td><td>$215 → $140~$172</td><td>25% 概率</td><td>—</td></tr>
+        <tr><td class="hi" colspan="5"><strong>概率加权预期回报: +17.4%</strong>（(30%×40%)+(45%×27%)+(25%×-27%)）</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="note">⚠️ 过去表现不代表未来收益。概率加权仅为参考框架，非精确预测。</div>
+</div>
+
+<!-- ═══════════ S2: 公司概览 ═══════════ -->
+<div class="card" id="s2">
+  <div class="card-header"><div class="card-num">2</div><div class="card-title">🏢 公司概览</div><div class="card-sub">全球AI加速计算领导者</div></div>
+  <p style="margin-bottom:14px">英伟达是全球最大的 AI 加速计算平台提供商，市值 $5.23T，通过 <strong>CUDA 软件生态 + 2年一代硬件架构</strong> 构建了全球最深的半导体护城河。2026 财年营收 $215.9B（+65.5%），数据中心占比超 90%。</p>
+  <h3>业务构成</h3>
+  <div class="kpis">
+    <div class="kpi-card"><label>数据中心</label><div class="v">$190B+</div><div class="c">占营收 90%+ | Q4 单季 $62.3B</div></div>
+    <div class="kpi-card"><label>网络 (NVLink/Switch)</label><div class="v">$11B</div><div class="c">Q4 单季 | +263% YoY</div></div>
+    <div class="kpi-card"><label>游戏 GPU</label><div class="v">~$8B</div><div class="c">GeForce RTX 50 系列</div></div>
+    <div class="kpi-card"><label>专业可视化/汽车</label><div class="v">~$5B</div><div class="c">Omniverse / DRIVE</div></div>
+  </div>
+  <h3>核心竞争力</h3>
+  <div class="tags">
+    <span class="tag tg">CUDA 生态系统</span><span class="tag tg">2年一代架构迭代</span><span class="tag tg">75% 毛利率</span>
+    <span class="tag tb">Blackwell/Rubin 平台</span><span class="tag tb">AI 训练+推理全覆盖</span><span class="tag tb">主权 AI</span>
+  </div>
+</div>
+
+<!-- ═══════════ S3: 过去一年走势 ═══════════ -->
+<div class="card" id="s3">
+  <div class="card-header"><div class="card-num">3</div><div class="card-title">📈 过去一年走势</div><div class="card-sub">2025.04 — 2026.05</div></div>
+  <p style="margin-bottom:16px">股价从 ~$101.5 涨至 $215.20（<span class="up">+98.8%</span>），同期营收从 $130.5B 飙至 $215.9B（+65.5%）。经历四个阶段：<strong>怀疑期→确认期→消化期→重新定价期</strong>。每次回调（DeepSeek恐慌 -8%、GTC利好兑现 -3%）均在2-4周内被买盘吸收。</p>
+  <div class="chart-wrap"><canvas id="priceChart"></canvas></div>
+  <div class="kpis">
+    <div class="kpi-card"><label>TTM 回报</label><div class="v up">+98.8%</div><div class="c">$101.5 → $215.2</div></div>
+    <div class="kpi-card"><label>YTD 回报</label><div class="v up">+15.3%</div><div class="c">2026.01.01 → 现在</div></div>
+    <div class="kpi-card"><label>52周高</label><div class="v">$217.80</div><div class="c">2026年5月</div></div>
+    <div class="kpi-card"><label>52周低</label><div class="v">$83.84</div><div class="c">2025年</div></div>
+  </div>
+</div>
+
+<!-- ═══════════ S4: 竞争格局 ═══════════ -->
+<div class="card" id="s4">
+  <div class="card-header"><div class="card-num">4</div><div class="card-title">🏆 竞争格局</div><div class="card-sub">半导体AI加速器 · 可比公司对比</div></div>
+  <div class="t-wrap">
+    <table>
+      <thead><tr><th>指标</th><th class="hi">NVDA</th><th>AMD</th><th>AVGO</th><th>INTC</th></tr></thead>
+      <tbody>
+        <tr><td>市值</td><td class="hi">$5.23T</td><td>$323B</td><td>$1.5T</td><td>$221B</td></tr>
+        <tr><td>营收 (TTM)</td><td class="hi">$215.9B</td><td>$34.6B</td><td>$63.9B</td><td>$52.9B</td></tr>
+        <tr><td>营收增速</td><td class="up hi">65.5%</td><td class="up">34.3%</td><td class="up">23.9%</td><td class="dn">-0.5%</td></tr>
+        <tr><td>营业利润率</td><td class="hi">60.4%</td><td>10.7%</td><td>40.8%</td><td>0.0%</td></tr>
+        <tr><td>FCF 利润率</td><td class="hi">44.8%</td><td>19.4%</td><td>42.1%</td><td>-9.4%</td></tr>
+        <tr><td>P/E (TTM)</td><td>43.9x</td><td>74.5x</td><td>65.3x</td><td>-826x</td></tr>
+        <tr><td>12月市场回报</td><td class="up">46.1%</td><td class="up">98.9%</td><td class="up">61.3%</td><td class="up">91.7%</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p style="margin-top:12px">NVDA 在营收规模、增速、利润率、FCF 生成能力四个维度全面碾压同业。其 <strong>PEG 0.66</strong> 在同业中最低——相对增长速度反而是最便宜的。</p>
+  <h3>护城河评估</h3>
+  <div class="bars">
+    <div class="bar-row"><div class="bl">CUDA 生态锁定</div><div class="btr"><div class="bfill" style="width:95%;background:var(--green)"></div></div><div class="bv">极宽</div></div>
+    <div class="bar-row"><div class="bl">硬件迭代速度</div><div class="btr"><div class="bfill" style="width:90%;background:var(--green)"></div></div><div class="bv">极快</div></div>
+    <div class="bar-row"><div class="bl">客户转换成本</div><div class="btr"><div class="bfill" style="width:90%;background:var(--green)"></div></div><div class="bv">极高</div></div>
+    <div class="bar-row"><div class="bl">定价权</div><div class="btr"><div class="bfill" style="width:85%;background:var(--green)"></div></div><div class="bv">极强</div></div>
+    <div class="bar-row"><div class="bl">自研芯片威胁</div><div class="btr"><div class="bfill" style="width:35%;background:var(--amber)"></div></div><div class="bv">中期风险</div></div>
+  </div>
+</div>
+
+<!-- ═══════════ S5: 估值分析 ═══════════ -->
+<div class="card" id="s5">
+  <div class="card-header"><div class="card-num">5</div><div class="card-title">💰 估值分析</div><div class="card-sub">DCF · 倍数 · PEG · VM Score</div></div>
+  <h3>🧮 VM Score 评分明细</h3>
+  <div class="t-wrap">
+    <table>
+      <thead><tr><th>维度</th><th>子项</th><th>得分</th><th>满分</th><th>判断依据</th></tr></thead>
+      <tbody>
+        <tr><td>💰 价格</td><td>DCF安全边际</td><td>10</td><td>15</td><td>PEG 0.66，保守 DCF 仍有 15-25% 上行</td></tr>
+        <tr><td>💰 价格</td><td>P/E vs 均值</td><td>8</td><td>10</td><td>远期 PE 25.8x 远低于历史均值 40x+</td></tr>
+        <tr><td>💰 价格</td><td>EV/EBITDA vs行业</td><td>3</td><td>8</td><td>~38x 远超行业 15-25x，成长溢价已定价</td></tr>
+        <tr><td>💰 价格</td><td>PEG</td><td>6</td><td>7</td><td>PEG 0.66 &lt; 1.0，增速支撑估值</td></tr>
+        <tr style="font-weight:700"><td>💰 价格小计</td><td></td><td><strong>27</strong></td><td><strong>40</strong></td><td>成长股视角合理偏低估</td></tr>
+        <tr><td>🏭 质量</td><td>ROIC vs WACC</td><td>12</td><td>12</td><td>ROIC ~50%+ vs WACC 10%，利差 &gt;40pp</td></tr>
+        <tr><td>🏭 质量</td><td>利润率</td><td>10</td><td>10</td><td>毛利率 75% + 净利率 55.6%，碾压式领先</td></tr>
+        <tr><td>🏭 质量</td><td>FCF质量</td><td>6</td><td>8</td><td>FCF利润率 44.8%，FCF/NI比 83%</td></tr>
+        <tr><td>🏭 质量</td><td>护城河</td><td>10</td><td>10</td><td>CUDA生态+2年架构迭代，转换成本极高</td></tr>
+        <tr style="font-weight:700"><td>🏭 质量小计</td><td></td><td><strong>38</strong></td><td><strong>40</strong></td><td>全球最优质半导体企业</td></tr>
+        <tr><td>🛡️ 安全</td><td>F-Score</td><td>10</td><td>10</td><td>全面扩张，零负债风险</td></tr>
+        <tr><td>🛡️ 安全</td><td>资产负债</td><td>4</td><td>5</td><td>净现金状态，$58.5B 回购授权</td></tr>
+        <tr><td>🛡️ 安全</td><td>盈利稳定性</td><td>4</td><td>5</td><td>强劲但半导体周期属性不可忽视</td></tr>
+        <tr style="font-weight:700;background:#f0fdf4"><td>🛡️ 安全小计</td><td></td><td><strong>18</strong></td><td><strong>20</strong></td><td>财务极其稳健</td></tr>
+        <tr style="font-weight:700;font-size:14px;background:#f0fdf4"><td>🎯 综合评分</td><td></td><td><strong>8.3</strong></td><td><strong>/10</strong></td><td>🟢 强力推荐</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="chart-grid">
+    <div class="chart-wrap"><canvas id="vmRadar"></canvas></div>
+    <div class="chart-wrap"><canvas id="peCompareChart"></canvas></div>
+  </div>
+</div>
+
+<!-- ═══════════ S6: 未来一年展望 ═══════════ -->
+<div class="card" id="s6">
+  <div class="card-header"><div class="card-num">6</div><div class="card-title">🔮 未来一年展望</div><div class="card-sub">2026.05 — 2027.05 · 情景概率</div></div>
+  <div class="t-wrap">
+    <table>
+      <thead><tr><th>情景</th><th>概率</th><th>目标价</th><th>vs $215</th><th>核心假设</th></tr></thead>
+      <tbody>
+        <tr class="hi"><td>🟢 乐观</td><td>30%</td><td>$300–$380</td><td class="up">+40~77%</td><td>AI推理爆发，主权AI $60-80B，Vera Rubin超预期</td></tr>
+        <tr><td>🟡 基准</td><td>45%</td><td>$255–$290</td><td class="up">+19~35%</td><td>增速放缓至25-30%，估值温和收缩</td></tr>
+        <tr><td>🔴 悲观</td><td>25%</td><td>$140–$175</td><td class="dn">-19~-35%</td><td>AI capex见顶，自研芯片替代加速，出口管制扩大</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>概率加权: (30%×40%)+(45%×27%)+(25%×-27%) = <strong class="up">+17.4%</strong> 正期望值</p>
+  <div class="chart-wrap"><canvas id="scenarioChart"></canvas></div>
+  <h3>未来12个月关键催化剂</h3>
+  <div class="tags">
+    <span class="tag tb">5/20 Q1 FY27 财报</span><span class="tag tb">6月 Computex 2026</span>
+    <span class="tag tg">Q3 Vera Rubin 首批出货</span><span class="tag ta">12月 云商 2027 capex指引</span>
+    <span class="tag tb">2月 FY27 年报</span><span class="tag tg">3月 GTC 2027</span>
+  </div>
+</div>
+
+<!-- ═══════════ S7: 风险矩阵 ═══════════ -->
+<div class="card" id="s7">
+  <div class="card-header"><div class="card-num">7</div><div class="card-title">⚠️ 风险矩阵</div><div class="card-sub">概率 × 估计影响</div></div>
+  <div class="t-wrap">
+    <table>
+      <thead><tr><th>风险</th><th>概率</th><th>影响</th><th>风险值</th><th>触发条件</th></tr></thead>
+      <tbody>
+        <tr><td>AI capex 见顶/放缓</td><td>35%</td><td class="dn">-25%</td><td><span class="tag tr">高</span></td><td>云商 ROI 恶化</td></tr>
+        <tr><td>半导体周期下行</td><td>30%</td><td class="dn">-20%</td><td><span class="tag ta">中</span></td><td>宏观衰退 / AI泡沫</td></tr>
+        <tr><td>客户自研芯片替代</td><td>25%</td><td class="dn">-15%</td><td><span class="tag ta">中</span></td><td>TPUv6/Trainium3 大规模部署</td></tr>
+        <tr><td>出口管制扩大</td><td>20%</td><td class="dn">-10%</td><td><span class="tag ta">中</span></td><td>延伸至中东/东南亚</td></tr>
+        <tr><td>利润率压缩</td><td>20%</td><td class="dn">-10%</td><td><span class="tag ta">中</span></td><td>产品组合向系统倾斜</td></tr>
+        <tr><td>竞争加剧</td><td>15%</td><td class="dn">-5%</td><td><span class="tag tg">低</span></td><td>AMD MI400 逼近CUDA兼容</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="note">🔴 最大单一风险: AI capex 见顶。当前云商仍在加速投入，但需持续关注 2026H2 资本回报率信号。</div>
+</div>
+
+<!-- ═══════════ S8: 投资信号 ═══════════ -->
+<div class="card" id="s8">
+  <div class="card-header"><div class="card-num">8</div><div class="card-title">🎯 投资信号</div><div class="card-sub">Investment Signal Block</div></div>
+  <div class="signal">
+    <div class="signal-head">INVESTMENT SIGNAL</div>
+    <div class="signal-rows">
+      <div class="sr"><label>Signal</label><span style="color:var(--green)">BULLISH</span></div>
+      <div class="sr"><label>Confidence</label><span style="color:var(--green)">HIGH</span></div>
+      <div class="sr"><label>Horizon</label><span>LONG-TERM (12-18月)</span></div>
+      <div class="sr"><label>Score</label><span style="color:var(--blue)">8.3 / 10</span></div>
+      <div class="sr"><label>Action</label><span style="color:var(--green)">BUY</span></div>
+      <div class="sr"><label>Conviction</label><span style="color:var(--green)">STRONG</span></div>
+      <div class="sr"><label>Key Risk</label><span style="color:var(--red)">AI capex 周期见顶</span></div>
+      <div class="sr"><label>Key Catalyst</label><span style="color:var(--green)">Agentic AI 推理需求爆发</span></div>
+    </div>
+    <div class="signal-foot">Educational analysis only. Not financial advice.</div>
+  </div>
+</div>
+
+<!-- ═══════════ VERDICT ═══════════ -->
+<div id="verdict" style="scroll-margin-top:24px">
+<div class="verdict">
+  <h2>📋 最终裁决: 强力推荐 · BUY</h2>
+  <div class="verdict-grid">
+    <div>
+      <h3 style="color:#6ee7b7;font-size:13px;margin-bottom:12px">✅ 看多理由</h3>
+      <ul>
+        <li>CUDA 生态锁定 + 2年架构迭代 = 全球最深半导体护城河</li>
+        <li>AI 从训练→推理转型打开第二轮增长空间，推理是持续性需求</li>
+        <li>Forward PE 25.8x + PEG 0.66，在 65%+ 增速下估值实际偏低估</li>
+        <li>主权 AI $30B+ 新市场打开政府预算池，不完全依赖商业周期</li>
+        <li>FY2028 共识营收 $480B，若实现则当前价格有 40%+ 上行空间</li>
+      </ul>
+      <h3 style="color:#fca5a5;font-size:13px;margin:20px 0 12px">❌ 看空风险</h3>
+      <ul>
+        <li>前5大客户占数据中心营收 50%+，集中度极高</li>
+        <li>超大规模云商加速自研芯片（TPU、Trainium、Maia）</li>
+        <li>中国出口管制已使该市场归零，地缘政治风险仍在恶化</li>
+        <li>没有任何公司能永续保持 60%+ 增速</li>
+      </ul>
+    </div>
+    <div class="verdict-score">
+      <div class="big">8.3</div>
+      <div class="lbl">综合评分 / 10</div>
+      <div class="rec">🟢 强力推荐</div>
+      <div style="margin-top:18px;font-size:11px;color:#94a3b8">
+        价格 27/40 · 质量 38/40 · 安全 18/20
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<footer>InvestSkill v1.6.0 · 教育性分析，不构成投资建议 · 数据截至 2026/05/08</footer>
+
+</div></main>
+</div>
+
+<!-- ═══════════ CHARTS JS ═══════════ -->
+<script>
+const G='#059669',A='#d97706',R='#dc2626',B='#2563eb',N='#0f172a';
+
+// Chart 1: Price History (S3)
+new Chart(document.getElementById('priceChart'),{type:'line',data:{labels:['5月','6月','7月','8月','9月','10月','11月','12月','1月','2月','3月','4月','5月'],datasets:[{label:'NVDA 股价',data:[101,115,132,148,165,180,188,192,186,195,199,213,215],borderColor:B,backgroundColor:'rgba(37,99,235,.1)',fill:true,tension:.4,pointRadius:3}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{min:80,max:240,ticks:{callback:v=>'$'+v}}}}});
+
+// Chart 2: VM Score Radar (S5)
+new Chart(document.getElementById('vmRadar'),{type:'radar',data:{labels:['DCF安全边际','P/E vs 行业','EV/EBITDA','PEG Ratio','ROIC vs WACC','利润率','FCF质量','护城河','F-Score','资产负债','盈利稳定性'],datasets:[{label:'NVDA 得分率',data:[67,80,38,86,100,100,75,100,100,80,80],borderColor:B,backgroundColor:'rgba(37,99,235,.15)',pointBackgroundColor:B}]},options:{responsive:true,scales:{r:{min:0,max:100,ticks:{stepSize:20,display:false}},plugins:{legend:{display:false}}}}});
+
+// Chart 3: PE Comparison (S5)
+new Chart(document.getElementById('peCompareChart'),{type:'bar',data:{labels:['NVDA','AMD','AVGO','QCOM','行业均值'],datasets:[{label:'Forward PE',data:[25.8,40,30,20,25],backgroundColor:[B,'#f97316','#8b5cf6','#10b981','#94a3b8']}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>v+'x'}}}}});
+
+// Chart 4: Scenario Analysis (S6)
+new Chart(document.getElementById('scenarioChart'),{type:'bar',data:{labels:['悲观 (25%)','基准 (45%)','乐观 (30%)'],datasets:[{label:'预期回报',data:[-27,27,40],backgroundColor:[R,A,G]}]},options:{responsive:true,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>ctx.raw>0?'+'+ctx.raw+'%':ctx.raw+'%'}}},scales:{y:{ticks:{callback:v=>v+'%'}}}}});
+</script>
+</body>
+</html>

@@ -50,6 +50,18 @@
 - **涨跌总览表**：固定5列 `维度|涨跌比例|对应价格|概率权重|行业对比`
 - **VM Score 明细**：12行 `Price 40% + Quality 40% + Safety 20%`
 - **HTML 报告**：8节（S1-S8+verdict），CSS 来自 `InvestSkill/_template.html`
+- **HTML 验证（🚨 必须）**：每次生成/修改 HTML 报告后，**必须**运行验证：
+  ```bash
+  python3 /home/severin/Codelib/股市分析/InvestSkill/validate_html.py <报告路径>
+  ```
+  验证失败 → 检查缺失 sections → 修复后重新验证。严禁交付未通过验证的 HTML 报告。
+  原因：LLM 单次输出长 HTML 容易丢失中间 section（如苹果 260510 报告缺 S3/S4/S6/S7）。
+
+### 批量分析执行策略（🚫 禁止并发派发）
+- **3+ 家公司同时分析时，必须逐家自行执行，禁止 `task(background=true)` 并发派发**
+- 原因：后台子代理并发槽位仅 1-2 个，多发必饿死
+- 正确节奏：搜索→评分→写文件，完成一家再下一家
+- 详见 invest-skill SKILL.md "批量分析执行策略" 章节
 
 ### 归档
 - 公司文件夹→中文名
