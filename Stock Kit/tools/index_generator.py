@@ -55,6 +55,12 @@ REPORT_NAMES: dict[str, str] = {
     'BNB': '分析输出/BNB/260511_综合分析报告.html',
 }
 
+
+def has_report_for_ticker(ticker: str) -> bool:
+    name = NAME_MAP.get(ticker, ticker)
+    report_rel = REPORT_NAMES.get(name)
+    return bool(report_rel and (BASE_DIR / report_rel).exists())
+
 MARKET_GROUP: dict[str, list[str]] = {
     '🇺🇸 美股': ['NVDA', 'AAPL', 'INTC', 'TSLA', 'AMD', 'MU'],
     '🇭🇰 港股': ['1810.HK', '0700.HK', '9988.HK', '3690.HK', '1211.HK'],
@@ -270,6 +276,7 @@ def generate() -> str:
         [(t, r.composite_score, r.composite_rank, r.score_10, r.rows) for t, r in stock_rankings.items()],
         key=lambda x: x[1]
     )
+    sorted_stocks = [item for item in sorted_stocks if has_report_for_ticker(item[0])]
     stock_total = len(sorted_stocks)
 
     stock_cards = _build_stock_cards(sorted_stocks, stock_total)
