@@ -314,6 +314,15 @@ def apply_authoritative_report_data(report: StockReport, price_info: PriceSnapsh
         ))
 
     report.f_score_total = int(price_info.f_score or 0)
+    report.s5_body_html = (
+        f"<p>估值区块只展示缓存中的事实指标：Forward P/E {price_info.forward_pe or '—'}、"
+        f"PEG {price_info.peg_ratio or '—'}、EBIT/EV {price_info.ebit_ev or '—'}、ROIC {price_info.roic or '—'}。"
+        f"本 pipeline 未计算 DCF，因此不输出 DCF 目标价作为事实。</p>"
+    )
+    report.s6_body_html = (
+        f"<p>未来展望中的数值只使用缓存目标价 {price_info.price_target or '—'} 与当前价 {report.cover_price} 计算。"
+        f"未取得逐情景模型输入时，不生成悲观/基准/乐观三档假设。</p>"
+    )
     report.s5_valuation_methods = [
         ValuationMethod(name='当前价格', value=report.cover_price, probability='事实'),
         ValuationMethod(name='分析师目标价', value=price_info.price_target or '—', probability='外部来源'),
