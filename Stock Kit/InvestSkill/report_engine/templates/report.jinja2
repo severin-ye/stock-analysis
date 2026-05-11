@@ -95,7 +95,6 @@ footer{text-align:center;padding:16px 0 32px;font-size:11px;color:var(--muted)}
 {# ── 侧边栏 ── #}
 <aside class="sidebar">
   <div class="sidebar-logo"><div class="ticker">{{ ticker }}</div><div class="name">{{ company_name }}</div></div>
-  <div class="sidebar-score"><div class="score-pill"><span class="num">{{ composite_rank_8 or '-' }}</span> &nbsp;综合排名</div></div>
   <nav>
     <div class="nav-gl">分析章节</div>
     {% for sid, label in SECTION_LABELS.items() %}
@@ -180,34 +179,7 @@ footer{text-align:center;padding:16px 0 32px;font-size:11px;color:var(--muted)}
 
 {# ── S5: 估值分析 ── #}
 <div class="card" id="s5">
-  <div class="card-header"><div class="card-num">5</div><div class="card-title">💰 估值分析</div><div class="card-sub">DCF · 倍数 · 四层排名 (L1 40% L2 25% L3 25% L4 10%)</div></div>
-
-  {% if greenblatt_ranking %}
-  <h3>🏆 四层加权排名 · 综合 {{ composite_rank_8 }}</h3>
-  <div class="t-wrap"><table>
-    <thead><tr><th>Layer</th><th>维度</th><th>主指标</th><th>数值</th><th>权重</th><th>排名</th><th>判断</th></tr></thead>
-    <tbody>
-      {% for r in greenblatt_ranking %}
-      <tr>
-        <td><strong>{{ r.layer }}</strong></td>
-        <td>{{ r.dimension }}</td>
-        <td>{{ r.metric }}</td>
-        <td>{{ r.value }}</td>
-        <td>{{ r.weight }}</td>
-        <td>{{ r.rank }}</td>
-        <td>{{ r.verdict }}</td>
-      </tr>
-      {% endfor %}
-      <tr style="font-weight:700;background:#f0fdf4">
-        <td colspan="4">加权综合 = L1×40% + L2×25% + L3×25% + L4×10%</td>
-        <td>100%</td>
-        <td><strong>{{ composite_rank_8 }}</strong></td>
-        <td>分数 {{ "%.2f"|format(composite_score) }} (越小越好)</td>
-      </tr>
-    </tbody>
-  </table></div>
-  {% if ranking_summary %}<p style="margin-top:8px;font-size:12px;color:var(--slate)"><em>{{ ranking_summary }}</em></p>{% endif %}
-  {% endif %}
+  <div class="card-header"><div class="card-num">5</div><div class="card-title">💰 估值分析</div><div class="card-sub">DCF · 倍数</div></div>
 
   {% if f_score_items %}
   <h3>🛡️ Piotroski F-Score: {{ f_score_total }}/9</h3>
@@ -298,14 +270,8 @@ footer{text-align:center;padding:16px 0 32px;font-size:11px;color:var(--muted)}
     <div class="signal-rows">
       <div class="sr"><label>Action</label><span>{{ s8_signal.action }}</span></div>
       <div class="sr"><label>Conviction</label><span>{{ s8_signal.conviction }}</span></div>
-      {% if s8_signal.rank_summary %}
-      <div class="sr"><label>Rank</label><span>{{ s8_signal.rank_summary }}</span></div>
-      {% endif %}
-      {% if s8_signal.composite_rank %}
-      <div class="sr"><label>Composite</label><span>{{ s8_signal.composite_rank }}</span></div>
-      {% endif %}
     </div>
-    <div class="signal-foot">Greenblatt 排名法 v2.0 · 教育性分析，不构成投资建议</div>
+    <div class="signal-foot">教育性分析，不构成投资建议</div>
   </div>
   {% endif %}
 </div>
@@ -326,8 +292,8 @@ footer{text-align:center;padding:16px 0 32px;font-size:11px;color:var(--muted)}
       </div>
     </div>
     <div class="verdict-score">
-      <div class="big">{{ composite_rank_8 }}</div>
-      <div class="lbl">四层加权排名 · F-Score {{ f_score_total }}/9 · 综合分 {{ "%.2f"|format(composite_score) }}</div>
+      <div class="big">{{ f_score_total }}/9</div>
+      <div class="lbl">Piotroski F-Score · 财务健康度</div>
       <div class="rec">{{ verdict.recommendation }}</div>
     </div>
   </div>

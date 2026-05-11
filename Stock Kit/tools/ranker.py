@@ -32,6 +32,19 @@ class RankingResult:
     composite_score: float
     composite_rank: str
     summary: str
+    score_10: float = 0.0  # 1-10 十分制, 越大越好
+
+
+def composite_to_score10(composite: float, max_possible: float) -> float:
+    """将复合分转换为 1-10 十分制（越大越好）
+
+    composite: 加权排名分 (越小越好), 理论范围 [1.0, max_possible]
+    max_possible: 各层最大排名×权重的加权和
+    """
+    if max_possible <= 1.0:
+        return 10.0
+    raw = round(11.0 - composite * 10.0 / max_possible, 1)
+    return max(1.0, min(10.0, raw))
 
 
 def compute_greenblatt(
@@ -131,11 +144,20 @@ def compute_greenblatt(
         f"+ {l3_rank_num}×25% + {l4_rank_num}×10% = {composite_score:.2f}"
     )
 
+    max_possible = (
+        len(all_ebit_ev) * 0.40 +
+        len(all_roic) * 0.25 +
+        len(all_f_score) * 0.25 +
+        len(all_peg) * 0.10
+    )
+    score_10 = composite_to_score10(composite_score, max_possible)
+
     return RankingResult(
         rows=rows,
         composite_score=composite_score,
         composite_rank=composite_rank,
         summary=summary,
+        score_10=score_10,
     )
 
 
@@ -205,9 +227,18 @@ def compute_crypto_ranking(
         f"+ {l3r}×25% + {l4r}×10% = {composite_score:.2f}"
     )
 
+    max_possible = (
+        len(all_mvrv) * 0.40 +
+        len(all_hash_rate) * 0.25 +
+        len(all_f_score) * 0.25 +
+        len(all_halving_days) * 0.10
+    )
+    score_10 = composite_to_score10(composite_score, max_possible)
+
     return RankingResult(
         rows=rows,
         composite_score=composite_score,
         composite_rank="",
         summary=summary,
+        score_10=score_10,
     )

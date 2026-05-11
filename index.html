@@ -3,174 +3,301 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>股市分析 · 综合投资分析报告</title>
+<title>投资标的综合排名 — Greenblatt 四层加权</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{font-family:-apple-system,BlinkMacSystemFont,'PingFang SC','Microsoft YaHei',sans-serif;background:#0f172a;color:#f8fafc;min-height:100vh;padding:40px 20px}
-h1{text-align:center;font-size:28px;margin-bottom:8px}
-.sub{text-align:center;color:#94a3b8;font-size:13px;margin-bottom:40px}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:20px;max-width:1100px;margin:0 auto}
-.card{background:#1e293b;border:1px solid #334155;border-radius:10px;padding:24px;transition:border-color .2s,transform .2s}
-.card:hover{border-color:#3b82f6;transform:translateY(-2px)}
-.card .ticker{font-size:22px;font-weight:700;margin-bottom:4px}
-.card .name{font-size:12px;color:#94a3b8;margin-bottom:16px}
-.card .kpis{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
-.card .kpi{padding:8px;background:rgba(15,23,42,.5);border-radius:6px}
-.card .kpi label{display:block;font-size:9px;text-transform:uppercase;letter-spacing:.4px;color:#64748b;margin-bottom:2px}
-.card .kpi .v{font-size:16px;font-weight:700}
-.up{color:#059669}.dn{color:#dc2626}.nu{color:#d97706}
-.card .links{display:flex;gap:8px;flex-wrap:wrap}
-.card .links a{flex:1;min-width:80px;text-align:center;padding:8px 12px;border-radius:6px;font-size:11px;font-weight:600;text-decoration:none;transition:opacity .2s}
-.card .links a:hover{opacity:.85}
-.btn-md{background:#1e3a5f;color:#93c5fd;border:1px solid #334155}
-.btn-html{background:#065f46;color:#6ee7b7;border:1px solid #047857}
-.dim{opacity:.5;pointer-events:none}
-footer{text-align:center;margin-top:48px;color:#475569;font-size:11px}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--navy:#0f172a;--blue:#2563eb;--blue-l:#3b82f6;--green:#059669;--red:#dc2626;--amber:#d97706;--slate:#64748b;--border:#e2e8f0;--bg:#f8fafc;--white:#fff;--text:#0f172a;--muted:#94a3b8;--r:8px;--sh:0 1px 3px rgba(0,0,0,.06)}
+body{font-family:-apple-system,BlinkMacSystemFont,'Inter','PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.6}
+.wrap{max-width:1100px;margin:0 auto;padding:40px 24px 80px}
+h1{font-size:24px;font-weight:800;color:var(--navy);margin-bottom:4px}
+.sub{font-size:13px;color:var(--slate);margin-bottom:32px}
+
+/* ── 排名总览卡片 ── */
+.leaderboard{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;margin-bottom:40px}
+.rank-card{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:20px 24px;box-shadow:var(--sh);position:relative;overflow:hidden;transition:transform .15s,box-shadow .15s}
+.rank-card:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.08)}
+.rank-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:4px}
+.rank-card.r1::before{background:linear-gradient(180deg,#fbbf24,#d97706)}
+.rank-card.r2::before{background:linear-gradient(180deg,#94a3b8,#64748b)}
+.rank-card.r3::before{background:linear-gradient(180deg,#d97706,#92400e)}
+.rank-card .rank-top{display:flex;align-items:baseline;gap:10px;margin-bottom:12px}
+.rank-card .rank-pos{font-size:36px;font-weight:800;color:var(--navy);line-height:1}
+.rank-card .rank-pos sup{font-size:18px;font-weight:600;color:var(--muted)}
+.rank-card .ticker-name{font-size:18px;font-weight:700}
+.rank-card .ticker-name small{font-size:12px;color:var(--muted);font-weight:400;margin-left:4px}
+.rank-card .score-big{font-size:42px;font-weight:800;color:var(--blue);line-height:1}
+.rank-card .score-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.rank-card .metrics{display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border)}
+.rank-card .metrics .m label{display:block;font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.3px}
+.rank-card .metrics .m span{font-size:14px;font-weight:700}
+.rank-card .metrics .m .pos{font-size:11px;color:var(--slate);margin-left:4px}
+
+/* ── 详细排名表 ── */
+.card{background:var(--white);border:1px solid var(--border);border-radius:var(--r);padding:28px;margin-bottom:20px;box-shadow:var(--sh)}
+.card-title{font-size:15px;font-weight:700;margin-bottom:18px;color:var(--navy)}
+.t-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:6px;margin:8px 0}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead{background:var(--bg)}
+th{padding:10px 14px;text-align:left;font-size:11px;font-weight:600;letter-spacing:.4px;color:var(--slate);border-bottom:1px solid var(--border);white-space:nowrap}
+td{padding:10px 14px;border-bottom:1px solid #f1f5f9}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:#fafbff}
+tr.hi{background:#f0fdf4}
+.up{color:var(--green);font-weight:600}
+.dn{color:var(--red);font-weight:600}
+.nu{color:var(--amber);font-weight:600}
+
+/* ── 方法论 ── */
+.method{border-left:3px solid var(--blue);background:#f8faff;border-radius:0 8px 8px 0;padding:20px 24px;margin-top:24px}
+.method h3{font-size:14px;font-weight:700;margin-bottom:12px;color:var(--navy)}
+.method .formula{font-family:'SF Mono','Fira Code',monospace;font-size:12px;color:var(--slate);background:#f1f5f9;padding:8px 14px;border-radius:4px;display:inline-block;margin:8px 0}
+.method p{font-size:12px;color:var(--slate);line-height:1.8}
+
+.chart-wrap{position:relative;margin:16px 0}
+.chart-wrap canvas{max-height:300px}
+
+footer{text-align:center;padding:16px 0;font-size:11px;color:var(--muted)}
 </style>
 </head>
 <body>
-<h1>📊 综合投资分析报告</h1>
-<div class="sub">Greenblatt 排名法 v2.0 · 分析日期 2026-05-10 · L1(EBIT/EV) + L2(ROIC) + L3(F-Score)</div>
+<div class="wrap">
 
-<div class="grid">
+<h1>🏆 投资标的综合排名</h1>
+<p class="sub">Greenblatt 四层加权排名体系 v3.0 · 基于实时市场数据 · 分析日期 2026-05-11</p>
 
+<div class="leaderboard">
+  <div class="rank-card r1">
+    <div class="rank-top">
+      <div class="rank-pos">#1<sup>/7</sup></div>
+      <div class="ticker-name">苹果 <small>AAPL · NASDAQ</small></div>
+    </div>
+    <div style="display:flex;align-items:baseline;gap:8px">
+      <div class="score-big">8.0</div>
+      <div class="score-label">综合评分 /10</div>
+    </div>
+    <div class="metrics">
+      <div class="m"><label>EBIT/EV</label><span>3.47%</span><span class="pos">#2</span></div>
+      <div class="m"><label>ROIC</label><span>104.3%</span><span class="pos">#2</span></div>
+      <div class="m"><label>F-Score</label><span>8/9</span><span class="pos">#1</span></div>
+      <div class="m"><label>PEG</label><span>2.88x</span><span class="pos">#6</span></div>
+    </div>
+  </div>
+
+  <div class="rank-card r2">
+    <div class="rank-top">
+      <div class="rank-pos">#2<sup>/7</sup></div>
+      <div class="ticker-name">美光 <small>MU · NASDAQ</small></div>
+    </div>
+    <div style="display:flex;align-items:baseline;gap:8px">
+      <div class="score-big">7.5</div>
+      <div class="score-label">综合评分 /10</div>
+    </div>
+    <div class="metrics">
+      <div class="m"><label>EBIT/EV</label><span>3.36%</span><span class="pos">#3</span></div>
+      <div class="m"><label>ROIC</label><span>37.4%</span><span class="pos">#3</span></div>
+      <div class="m"><label>F-Score</label><span>7/9</span><span class="pos">#2</span></div>
+      <div class="m"><label>PEG</label><span>0.06x</span><span class="pos">#1</span></div>
+    </div>
+  </div>
+
+  <div class="rank-card r3">
+    <div class="rank-top">
+      <div class="rank-pos">#3<sup>/7</sup></div>
+      <div class="ticker-name">小米 <small>1810.HK · HKEX</small></div>
+    </div>
+    <div style="display:flex;align-items:baseline;gap:8px">
+      <div class="score-big">6.8</div>
+      <div class="score-label">综合评分 /10</div>
+    </div>
+    <div class="metrics">
+      <div class="m"><label>EBIT/EV</label><span>4.00%</span><span class="pos">#1</span></div>
+      <div class="m"><label>ROIC</label><span>14.1%</span><span class="pos">#4</span></div>
+      <div class="m"><label>F-Score</label><span>6/9</span><span class="pos">#5</span></div>
+      <div class="m"><label>PEG</label><span>1.38x</span><span class="pos">#4</span></div>
+    </div>
+  </div>
+
+  <div class="rank-card">
+    <div class="rank-top">
+      <div class="rank-pos">#4<sup>/7</sup></div>
+      <div class="ticker-name">英伟达 <small>NVDA · NASDAQ</small></div>
+    </div>
+    <div style="display:flex;align-items:baseline;gap:8px">
+      <div class="score-big">5.4</div>
+      <div class="score-label">综合评分 /10</div>
+    </div>
+    <div class="metrics">
+      <div class="m"><label>EBIT/EV</label><span>2.52%</span><span class="pos">#4</span></div>
+      <div class="m"><label>ROIC</label><span>126.3%</span><span class="pos">#1</span></div>
+      <div class="m"><label>F-Score</label><span>4/9</span><span class="pos">#8</span></div>
+      <div class="m"><label>PEG</label><span>0.66x</span><span class="pos">#2</span></div>
+    </div>
+  </div>
+
+  <div class="rank-card">
+    <div class="rank-top">
+      <div class="rank-pos">#5<sup>/7</sup></div>
+      <div class="ticker-name">AMD <small>AMD · NASDAQ</small></div>
+    </div>
+    <div style="display:flex;align-items:baseline;gap:8px">
+      <div class="score-big">4.7</div>
+      <div class="score-label">综合评分 /10</div>
+    </div>
+    <div class="metrics">
+      <div class="m"><label>EBIT/EV</label><span>0.60%</span><span class="pos">#5</span></div>
+      <div class="m"><label>ROIC</label><span>7.8%</span><span class="pos">#5</span></div>
+      <div class="m"><label>F-Score</label><span>6/9</span><span class="pos">#4</span></div>
+      <div class="m"><label>PEG</label><span>1.01x</span><span class="pos">#3</span></div>
+    </div>
+  </div>
+
+  <div class="rank-card">
+    <div class="rank-top">
+      <div class="rank-pos">#6<sup>/7</sup></div>
+      <div class="ticker-name">特斯拉 <small>TSLA · NASDAQ</small></div>
+    </div>
+    <div style="display:flex;align-items:baseline;gap:8px">
+      <div class="score-big">3.1</div>
+      <div class="score-label">综合评分 /10</div>
+    </div>
+    <div class="metrics">
+      <div class="m"><label>EBIT/EV</label><span>0.30%</span><span class="pos">#7</span></div>
+      <div class="m"><label>ROIC</label><span>6.3%</span><span class="pos">#6</span></div>
+      <div class="m"><label>F-Score</label><span>6/9</span><span class="pos">#3</span></div>
+      <div class="m"><label>PEG</label><span>4.35x</span><span class="pos">#7</span></div>
+    </div>
+  </div>
+
+  <div class="rank-card">
+    <div class="rank-top">
+      <div class="rank-pos">#7<sup>/7</sup></div>
+      <div class="ticker-name">英特尔 <small>INTC · NASDAQ</small></div>
+    </div>
+    <div style="display:flex;align-items:baseline;gap:8px">
+      <div class="score-big">2.5</div>
+      <div class="score-label">综合评分 /10</div>
+    </div>
+    <div class="metrics">
+      <div class="m"><label>EBIT/EV</label><span>0.31%</span><span class="pos">#6</span></div>
+      <div class="m"><label>ROIC</label><span>1.5%</span><span class="pos">#7</span></div>
+      <div class="m"><label>F-Score</label><span>5/9</span><span class="pos">#6</span></div>
+      <div class="m"><label>PEG</label><span>1.69x</span><span class="pos">#5</span></div>
+    </div>
+  </div>
+
+  <div class="rank-card" style="border-color:var(--amber);background:linear-gradient(135deg,#fff 0%,#fffbeb 100%)">
+    <div class="rank-top">
+      <div class="rank-pos" style="font-size:20px">₿</div>
+      <div class="ticker-name">比特币 <small>BTC · Crypto</small></div>
+    </div>
+    <div style="display:flex;align-items:baseline;gap:8px">
+      <div class="score-big" style="color:var(--amber)">10.0</div>
+      <div class="score-label">MVRV 低估信号 /10</div>
+    </div>
+    <div class="metrics">
+      <div class="m"><label>MVRV Z-Score</label><span>0.97</span><span class="pos">低估</span></div>
+      <div class="m"><label>算力</label><span>1034 EH/s</span><span class="pos">新高</span></div>
+      <div class="m"><label>F-Score</label><span>5/9</span><span class="pos">链上</span></div>
+      <div class="m"><label>减半周期</label><span>752天</span><span class="pos">中性</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── 四层排名明细表 ── -->
 <div class="card">
-  <div class="ticker">AAPL</div>
-  <div class="name">苹果 · Apple · 消费科技巨头</div>
-  <div class="kpis">
-    <div class="kpi"><label>当前价</label><div class="v">$293</div></div>
-    <div class="kpi"><label>YTD</label><div class="v up">+17%</div></div>
-    <div class="kpi"><label>TTM</label><div class="v up">+48%</div></div>
-    <div class="kpi"><label>EBIT/EV</label><div class="v">3.50%</div></div>
-  </div>
-  <div class="links">
-    <a class="btn-md" href="苹果/260510-01_整体分析.md">📝 整体分析</a>
-    <a class="btn-md" href="苹果/260510-02_过去一年.md">📝 过去一年</a>
-    <a class="btn-md" href="苹果/260510-03_未来一年.md">📝 未来一年</a>
-    <a class="btn-html" href="苹果/260510_综合分析报告.html" target="_blank">🌐 HTML</a>
+  <div class="card-title">📊 四层加权排名明细 · 综合分 → 十分制转换</div>
+  <p style="font-size:12px;color:var(--slate);margin-bottom:16px">
+    综合分 = L1×40% + L2×25% + L3×25% + L4×10%（排名位置加权和，越小越好）<br>
+    十分制 = round(11 - 综合分 × 10 / 7.25, 1)（1-10，越大越好）
+  </p>
+  <div class="t-wrap">
+    <table>
+      <thead>
+        <tr><th>标的</th><th>L1 EBIT/EV</th><th>L2 ROIC</th><th>L3 F-Score</th><th>L4 PEG</th><th>综合分</th><th>十分制</th><th>排名</th></tr>
+      </thead>
+      <tbody>
+        <tr class="hi"><td><strong>苹果</strong></td><td>3.47% #2</td><td>104.3% #2</td><td>8/9 #1</td><td>2.88x #6</td><td>2.15</td><td><strong>8.0</strong></td><td>#1/7</td></tr>
+        <tr class="hi"><td><strong>美光</strong></td><td>3.36% #3</td><td>37.4% #3</td><td>7/9 #2</td><td>0.06x #1</td><td>2.55</td><td><strong>7.5</strong></td><td>#2/7</td></tr>
+        <tr class="hi"><td><strong>小米</strong></td><td>4.00% #1</td><td>14.1% #4</td><td>6/9 #5</td><td>1.38x #4</td><td>3.05</td><td><strong>6.8</strong></td><td>#3/7</td></tr>
+        <tr><td><strong>英伟达</strong></td><td>2.52% #4</td><td>126.3% #1</td><td>4/9 #8</td><td>0.66x #2</td><td>4.05</td><td><strong>5.4</strong></td><td>#4/7</td></tr>
+        <tr><td><strong>AMD</strong></td><td>0.60% #5</td><td>7.8% #5</td><td>6/9 #4</td><td>1.01x #3</td><td>4.55</td><td><strong>4.7</strong></td><td>#5/7</td></tr>
+        <tr><td><strong>特斯拉</strong></td><td>0.30% #7</td><td>6.3% #6</td><td>6/9 #3</td><td>4.35x #7</td><td>5.75</td><td><strong>3.1</strong></td><td>#6/7</td></tr>
+        <tr><td><strong>英特尔</strong></td><td>0.31% #6</td><td>1.5% #7</td><td>5/9 #6</td><td>1.69x #5</td><td>6.15</td><td><strong>2.5</strong></td><td>#7/7</td></tr>
+      </tbody>
+    </table>
   </div>
 </div>
 
+<!-- ── BTC 独立排名 ── -->
 <div class="card">
-  <div class="ticker">NVDA</div>
-  <div class="name">英伟达 · NVIDIA · AI计算霸主</div>
-  <div class="kpis">
-    <div class="kpi"><label>当前价</label><div class="v">$215</div></div>
-    <div class="kpi"><label>YTD</label><div class="v up">+15%</div></div>
-    <div class="kpi"><label>TTM</label><div class="v up">+99%</div></div>
-    <div class="kpi"><label>EBIT/EV</label><div class="v">2.52%</div></div>
+  <div class="card-title">₿ 比特币独立排名（加密适配指标）</div>
+  <div class="t-wrap">
+    <table>
+      <thead>
+        <tr><th>标的</th><th>L1 MVRV Z-Score</th><th>L2 算力</th><th>L3 F-Score</th><th>L4 减半周期</th><th>综合分</th><th>十分制</th></tr>
+      </thead>
+      <tbody>
+        <tr class="hi"><td><strong>比特币</strong></td><td>0.97 #1 深度低估</td><td>1034 EH/s #1 历史新高</td><td>5/9 #1</td><td>752天 #1 周期中性</td><td>1.00</td><td><strong>10.0</strong></td></tr>
+      </tbody>
+    </table>
   </div>
-  <div class="links">
-    <a class="btn-md" href="英伟达/260510-01_整体分析.md">📝 整体分析</a>
-    <a class="btn-md" href="英伟达/260510-02_过去一年.md">📝 过去一年</a>
-    <a class="btn-md" href="英伟达/260510-03_未来一年.md">📝 未来一年</a>
-    <a class="btn-html" href="英伟达/260510_综合分析报告.html" target="_blank">🌐 HTML</a>
-  </div>
+  <p style="font-size:12px;color:var(--slate);margin-top:8px">
+    BTC 使用加密专属四层指标：L1 MVRV Z-Score（越低越便宜）、L2 算力（越高网络越强）、L3 链上改编 F-Score、L4 距下一次减半天数（越近越有利）。当前 MVRV 0.97 处于历史低估区间。
+  </p>
 </div>
 
+<!-- ── 十分制分布图 ── -->
 <div class="card">
-  <div class="ticker">MU</div>
-  <div class="name">美光 · Micron · HBM存储巨头</div>
-  <div class="kpis">
-    <div class="kpi"><label>当前价</label><div class="v">$747</div></div>
-    <div class="kpi"><label>YTD</label><div class="v up">+32%</div></div>
-    <div class="kpi"><label>TTM</label><div class="v up">+782%</div></div>
-    <div class="kpi"><label>EBIT/EV</label><div class="v">3.34%</div></div>
-  </div>
-  <div class="links">
-    <a class="btn-md" href="美光/260510-01_整体分析.md">📝 整体分析</a>
-    <a class="btn-md" href="美光/260510-02_过去一年.md">📝 过去一年</a>
-    <a class="btn-md" href="美光/260510-03_未来一年.md">📝 未来一年</a>
-    <a class="btn-html" href="美光/260510_综合分析报告.html" target="_blank">🌐 HTML</a>
-  </div>
+  <div class="card-title">📈 综合评分分布（十分制）</div>
+  <div class="chart-wrap"><canvas id="scoreChart"></canvas></div>
 </div>
 
-<div class="card">
-  <div class="ticker">TSLA</div>
-  <div class="name">特斯拉 · Tesla · 物理AI期权</div>
-  <div class="kpis">
-    <div class="kpi"><label>当前价</label><div class="v">$428</div></div>
-    <div class="kpi"><label>YTD</label><div class="v dn">-9%</div></div>
-    <div class="kpi"><label>TTM</label><div class="v up">+49%</div></div>
-    <div class="kpi"><label>EBIT/EV</label><div class="v">2.38%</div></div>
-  </div>
-  <div class="links">
-    <a class="btn-md" href="特斯拉/260510-01_整体分析.md">📝 整体分析</a>
-    <a class="btn-md" href="特斯拉/260510-02_过去一年.md">📝 过去一年</a>
-    <a class="btn-md" href="特斯拉/260510-03_未来一年.md">📝 未来一年</a>
-    <a class="btn-html" href="特斯拉/260510_特斯拉_综合分析报告.html" target="_blank">🌐 HTML</a>
-  </div>
+<!-- ── 方法论 ── -->
+<div class="method">
+  <h3>⚙️ 方法论说明</h3>
+  <p>
+    <strong>核心理念：排名优于打分。</strong>不关心绝对值多大，只关心在可比标的中排第几。<br><br>
+    <strong>四层加权：</strong>
+    L1 EBIT/EV 40% · L2 ROIC 25% · L3 Piotroski F-Score 25% · L4 PEG 10%<br>
+    PEG 权重最低（10%）——深度价值投资不追求成长性，以安全边际为首要任务。<br><br>
+    <strong>十分制转换：</strong>将"越小越好"的排名加权和，通过线性归一化映射到 1-10 分（越大越好），直观反映投资吸引力。<br>
+    公式：<span class="formula">十分制 = round(11 - 综合分 × 10 / 7.25, 1)</span><br><br>
+    <strong>数据来源：</strong>stockanalysis.com + marketbeat.com 交叉验证。BTC 数据来自 coingecko + glassnode + bitbo.io。
+  </p>
 </div>
 
-<div class="card">
-  <div class="ticker">INTC</div>
-  <div class="name">英特尔 · Intel · 转型赌局</div>
-  <div class="kpis">
-    <div class="kpi"><label>当前价</label><div class="v">$125</div></div>
-    <div class="kpi"><label>YTD</label><div class="v up">+130%</div></div>
-    <div class="kpi"><label>TTM</label><div class="v up">+515%</div></div>
-    <div class="kpi"><label>EBIT/EV</label><div class="v">1.64%</div></div>
-  </div>
-  <div class="links">
-    <a class="btn-md" href="英特尔/260510-01_整体分析.md">📝 整体分析</a>
-    <a class="btn-md" href="英特尔/260510-02_过去一年.md">📝 过去一年</a>
-    <a class="btn-md" href="英特尔/260510-03_未来一年.md">📝 未来一年</a>
-    <a class="btn-html" href="英特尔/260510_英特尔_综合投资分析报告.html" target="_blank">🌐 HTML</a>
-  </div>
+<footer>InvestSkill v3.0 · 教育性分析，不构成投资建议 · 数据日期 2026-05-11</footer>
 </div>
 
-<div class="card">
-  <div class="ticker">AMD</div>
-  <div class="name">超威半导体 · AMD · x86+AI GPU双引擎</div>
-  <div class="kpis">
-    <div class="kpi"><label>当前价</label><div class="v">$115</div></div>
-    <div class="kpi"><label>YTD</label><div class="v dn">-4%</div></div>
-    <div class="kpi"><label>TTM</label><div class="v up">+35%</div></div>
-    <div class="kpi"><label>EBIT/EV</label><div class="v">1.35%</div></div>
-  </div>
-  <div class="links">
-    <a class="btn-md" href="AMD/260510-01_整体分析.md">📝 整体分析</a>
-    <a class="btn-md" href="AMD/260510-02_过去一年.md">📝 过去一年</a>
-    <a class="btn-md" href="AMD/260510-03_未来一年.md">📝 未来一年</a>
-    <a class="btn-html" href="AMD/260510_综合分析报告.html" target="_blank">🌐 HTML</a>
-  </div>
-</div>
+<script>
+const G='#059669',A='#d97706',R='#dc2626',B='#2563eb',S='#94a3b8';
 
-<div class="card">
-  <div class="ticker">⛓️ 1810.HK</div>
-  <div class="name">小米集团 · Xiaomi · 人车家生态</div>
-  <div class="kpis">
-    <div class="kpi"><label>当前价</label><div class="v">HK$30.5</div></div>
-    <div class="kpi"><label>YTD</label><div class="v dn">-21%</div></div>
-    <div class="kpi"><label>52周</label><div class="v dn">-34%</div></div>
-    <div class="kpi"><label>指标</label><div class="v">EBIT/EV 7.4%</div></div>
-  </div>
-  <div class="links">
-    <a class="btn-md" href="小米/260510-01_整体分析.md">📝 整体分析</a>
-    <a class="btn-md" href="小米/260510-02_过去一年.md">📝 过去一年</a>
-    <a class="btn-md" href="小米/260510-03_未来一年.md">📝 未来一年</a>
-    <a class="btn-html" href="小米/260510_综合分析报告.html" target="_blank">🌐 HTML</a>
-  </div>
-</div>
-
-<div class="card">
-  <div class="ticker">⛓️ BTC</div>
-  <div class="name">比特币 · Bitcoin · 数字黄金</div>
-  <div class="kpis">
-    <div class="kpi"><label>当前价</label><div class="v">$70,000</div></div>
-    <div class="kpi"><label>YTD</label><div class="v dn">-14%</div></div>
-    <div class="kpi"><label>距ATH</label><div class="v dn">-45%</div></div>
-    <div class="kpi"><label>指标</label><div class="v">MVRV 2.46</div></div>
-  </div>
-  <div class="links">
-    <a class="btn-md" href="比特币/260510-01_整体分析.md">📝 整体分析</a>
-    <a class="btn-md" href="比特币/260510-02_过去一年.md">📝 过去一年</a>
-    <a class="btn-md" href="比特币/260510-03_未来一年.md">📝 未来一年</a>
-    <a class="btn-html" href="比特币/260510_综合分析报告.html" target="_blank">🌐 HTML</a>
-  </div>
-</div>
-
-</div>
-<footer>Greenblatt 排名法 v2.0 · 教育性分析，不构成投资建议 · 数据截至 2026-05-10</footer>
+new Chart(document.getElementById('scoreChart'),{
+  type:'bar',
+  data:{
+    labels:['苹果','美光','小米','英伟达','AMD','特斯拉','英特尔'],
+    datasets:[{
+      label:'十分制评分',
+      data:[8.0,7.5,6.8,5.4,4.7,3.1,2.5],
+      backgroundColor:['#059669','#10b981','#f59e0b','#2563eb','#8b5cf6','#ef4444','#dc2626'],
+      borderRadius:6,
+      borderSkipped:false
+    }]
+  },
+  options:{
+    indexAxis:'y',
+    responsive:true,
+    plugins:{
+      legend:{display:false},
+      tooltip:{callbacks:{label:function(c){return c.raw+' / 10'}}}
+    },
+    scales:{
+      x:{min:0,max:10,ticks:{stepSize:2},grid:{color:'#f1f5f9'}},
+      y:{grid:{display:false}}
+    }
+  }
+});
+</script>
 </body>
 </html>

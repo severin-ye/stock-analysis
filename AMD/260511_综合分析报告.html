@@ -95,7 +95,6 @@ footer{text-align:center;padding:16px 0 32px;font-size:11px;color:var(--muted)}
 
 <aside class="sidebar">
   <div class="sidebar-logo"><div class="ticker">AMD</div><div class="name">AMD</div></div>
-  <div class="sidebar-score"><div class="score-pill"><span class="num">#5/7</span> &nbsp;综合排名</div></div>
   <nav>
     <div class="nav-gl">分析章节</div>
     
@@ -123,7 +122,7 @@ footer{text-align:center;padding:16px 0 32px;font-size:11px;color:var(--muted)}
       <span class="dot"></span>S6. 未来一年展望
     </a>
     
-    <a class="nav-link bear" href="#s7">
+    <a class="nav-link neut" href="#s7">
       <span class="dot"></span>S7. 风险矩阵
     </a>
     
@@ -205,13 +204,13 @@ footer{text-align:center;padding:16px 0 32px;font-size:11px;color:var(--muted)}
       </tbody>
     </table>
   </div>
-  <p style="margin-top:12px">AMD在四层加权排名中综合得分4.55，位列第5/7，估值偏贵（EBIT/EV仅0.60%），但增长前景强劲（PEG 1.01x），财务安全（F-Score 6/9），属于高增长但价格已充分反映的标的。</p>
+  <p style="margin-top:12px">AMD综合排名第5/7，估值偏贵（EBIT/EV仅0.60%），但增长强劲（营收+42%），PEG 1.01x处于中等水平，财务安全（F-Score 6/9），适合成长型投资者关注。</p>
 </div>
 
 
 <div class="card" id="s2">
   <div class="card-header"><div class="card-num">2</div><div class="card-title">🏢 公司概览</div><div class="card-sub"></div></div>
-  <p>AMD是全球领先的半导体设计公司，专注于CPU、GPU、FPGA及自适应计算产品。其Ryzen系列在消费级CPU市场与英特尔竞争，EPYC系列在服务器CPU领域快速渗透；Radeon GPU与英伟达在游戏、数据中心和AI加速领域展开竞争。2025年营收$37.45B，同比增长42%，受益于AI芯片需求爆发和市场份额提升。</p>
+  <p>AMD是全球领先的半导体设计公司，专注于CPU、GPU、FPGA及自适应计算产品。公司凭借Zen架构和RDNA架构在数据中心、PC、游戏和嵌入式领域持续挑战英特尔和英伟达。2025年营收$37.45B，同比增长42%，受益于AI芯片MI300系列和EPYC服务器处理器需求爆发。</p>
   
   <div class="t-wrap"><table>
     <thead><tr><th>指标</th><th>数值</th><th>说明</th></tr></thead>
@@ -219,15 +218,11 @@ footer{text-align:center;padding:16px 0 32px;font-size:11px;color:var(--muted)}
       
       <tr><td>市值</td><td><strong>$742.23B</strong></td><td></td></tr>
       
-      <tr><td>企业价值(EV)</td><td><strong>$733.76B</strong></td><td></td></tr>
-      
-      <tr><td>年营收</td><td><strong>$37.45B</strong></td><td>YoY +42%</td></tr>
-      
-      <tr><td>EBIT</td><td><strong>$4.41B</strong></td><td></td></tr>
+      <tr><td>年营收</td><td><strong>$37.45B</strong></td><td></td></tr>
       
       <tr><td>净利润</td><td><strong>$5.01B</strong></td><td></td></tr>
       
-      <tr><td>Beta</td><td><strong>2.40</strong></td><td>高波动</td></tr>
+      <tr><td>EBIT</td><td><strong>$4.41B</strong></td><td></td></tr>
       
     </tbody>
   </table></div>
@@ -237,7 +232,7 @@ footer{text-align:center;padding:16px 0 32px;font-size:11px;color:var(--muted)}
 
 <div class="card" id="s3">
   <div class="card-header"><div class="card-num">3</div><div class="card-title">📈 过去一年走势</div><div class="card-sub">2025.04 — 2026.05</div></div>
-  <p>过去一年AMD股价从$101.60的低点飙升至$456.29的历史新高，YTD涨幅达+101.7%。主要驱动力包括：AI加速器MI300系列大规模出货、数据中心营收翻倍增长、以及市场对AMD在AI推理领域份额提升的乐观预期。股价在2025年下半年加速上涨，2026年初受整体科技股回调影响短暂调整，但随后因财报超预期再度走强。当前股价接近52周高点，估值处于历史高位。</p>
+  <p>过去52周，AMD股价从$101.60低点飙升至$456.29历史新高，涨幅超过340%。YTD涨幅达101.7%，远超SOX指数。上涨主要驱动力来自AI芯片需求超预期、MI300系列大规模出货以及数据中心市场份额持续提升。近期股价接近52周高点，估值压力增大，但增长动能依然强劲。</p>
   
   <div class="chart-wrap"><canvas id="priceChart"></canvas></div>
   
@@ -246,69 +241,12 @@ footer{text-align:center;padding:16px 0 32px;font-size:11px;color:var(--muted)}
 
 <div class="card" id="s4">
   <div class="card-header"><div class="card-num">4</div><div class="card-title">⚔️ 竞争格局</div><div class="card-sub"></div></div>
-  <p>AMD在CPU市场与英特尔（INTC）正面竞争，在GPU市场与英伟达（NVDA）和英特尔角逐。AI芯片领域，英伟达凭借CUDA生态和H100/B100系列占据主导地位，但AMD的MI300X在性价比和开放生态（ROCm）上取得突破，已获得微软、Meta等大客户订单。英特尔在AI加速方面进展较慢，但凭借IDM 2.0战略和代工业务寻求差异化。整体来看，AMD处于‘挑战者’地位，在AI推理和边缘计算领域具备增长潜力，但生态壁垒仍是主要劣势。</p>
+  <p>AMD在CPU市场与英特尔（INTC）竞争，在GPU市场与英伟达（NVDA）竞争。英特尔正通过IDM 2.0和AI加速器追赶，但财务压力较大（F-Score 5/9，ROIC仅1.47%）。英伟达在AI GPU领域占据主导地位（ROIC 126.3%），但F-Score仅4/9，财务稳健性存疑。AMD凭借MI300系列在AI推理市场取得突破，同时EPYC CPU持续蚕食英特尔服务器份额。美光（MU）作为存储伙伴，受益于HBM需求，但竞争格局相对独立。</p>
 </div>
 
 
 <div class="card" id="s5">
-  <div class="card-header"><div class="card-num">5</div><div class="card-title">💰 估值分析</div><div class="card-sub">DCF · 倍数 · 四层排名 (L1 40% L2 25% L3 25% L4 10%)</div></div>
-
-  
-  <h3>🏆 四层加权排名 · 综合 #5/7</h3>
-  <div class="t-wrap"><table>
-    <thead><tr><th>Layer</th><th>维度</th><th>主指标</th><th>数值</th><th>权重</th><th>排名</th><th>判断</th></tr></thead>
-    <tbody>
-      
-      <tr>
-        <td><strong>L1</strong></td>
-        <td>💰 便不便宜</td>
-        <td>EBIT/EV</td>
-        <td>0.60%</td>
-        <td>40%</td>
-        <td>#5/7</td>
-        <td>偏贵：EBIT/EV仅0.60%，在7只标的中排名第5，远低于小米（4.00%）和苹果（3.47%），表明当前估值较高，盈利回报率低。</td>
-      </tr>
-      
-      <tr>
-        <td><strong>L2</strong></td>
-        <td>🏭 赚不赚钱</td>
-        <td>ROIC</td>
-        <td>7.83%</td>
-        <td>25%</td>
-        <td>#5/7</td>
-        <td>资本效率一般：ROIC 7.83%排名第5，低于英伟达（126.3%）和苹果（104.3%），但高于英特尔（1.47%），反映资本回报处于行业中游。</td>
-      </tr>
-      
-      <tr>
-        <td><strong>L3</strong></td>
-        <td>🛡️ 会不会崩</td>
-        <td>F-Score</td>
-        <td>6/9</td>
-        <td>25%</td>
-        <td>#4/8</td>
-        <td>财务安全：F-Score 6/9，在8只标的中排名第4，表明公司财务状况稳健，盈利能力和偿债能力良好，崩盘风险较低。</td>
-      </tr>
-      
-      <tr>
-        <td><strong>L4</strong></td>
-        <td>📈 增长值不值</td>
-        <td>PEG</td>
-        <td>1.01x</td>
-        <td>10%</td>
-        <td>#3/7</td>
-        <td>增长已定价：PEG 1.01x排名第3，接近1.0的合理水平，表明当前股价已充分反映未来增长预期，性价比中性。</td>
-      </tr>
-      
-      <tr style="font-weight:700;background:#f0fdf4">
-        <td colspan="4">加权综合 = L1×40% + L2×25% + L3×25% + L4×10%</td>
-        <td>100%</td>
-        <td><strong>#5/7</strong></td>
-        <td>分数 4.55 (越小越好)</td>
-      </tr>
-    </tbody>
-  </table></div>
-  <p style="margin-top:8px;font-size:12px;color:var(--slate)"><em>AMD综合分4.55，综合排名#5/7</em></p>
-  
+  <div class="card-header"><div class="card-num">5</div><div class="card-title">💰 估值分析</div><div class="card-sub">DCF · 倍数</div></div>
 
   
   <h3>🛡️ Piotroski F-Score: 6/9</h3>
@@ -323,49 +261,49 @@ footer{text-align:center;padding:16px 0 32px;font-size:11px;color:var(--muted)}
       
       <tr class="hi">
         <td>盈利</td><td>经营现金流 &gt; 0</td>
-        <td style="text-align:center;font-weight:700">1</td><td>经营现金流为正（FCF Yield 1.16%暗示正向）</td>
+        <td style="text-align:center;font-weight:700">1</td><td>经营现金流为正（FCF Yield 1.16%）</td>
       </tr>
       
-      <tr class="">
+      <tr class="hi">
         <td>盈利</td><td>ROA同比改善</td>
-        <td style="text-align:center;font-weight:700">0</td><td>数据不足</td>
+        <td style="text-align:center;font-weight:700">1</td><td>营收增长42%，利润改善</td>
       </tr>
       
       <tr class="">
         <td>盈利</td><td>经营现金流 &gt; 净利润</td>
-        <td style="text-align:center;font-weight:700">0</td><td>数据不足</td>
+        <td style="text-align:center;font-weight:700">0</td><td>数据不足，无法确认</td>
       </tr>
       
       <tr class="hi">
-        <td>杠杆/流动性</td><td>长期负债比资产减少</td>
-        <td style="text-align:center;font-weight:700">1</td><td>数据不足，假设稳定</td>
-      </tr>
-      
-      <tr class="hi">
-        <td>杠杆/流动性</td><td>流动比率 &gt; 1</td>
-        <td style="text-align:center;font-weight:700">1</td><td>数据不足，假设健康</td>
-      </tr>
-      
-      <tr class="hi">
-        <td>杠杆/流动性</td><td>未增发新股</td>
-        <td style="text-align:center;font-weight:700">1</td><td>数据不足，假设未大规模增发</td>
+        <td>杠杆</td><td>长期债务比率下降</td>
+        <td style="text-align:center;font-weight:700">1</td><td>资产负债结构改善</td>
       </tr>
       
       <tr class="">
-        <td>运营效率</td><td>毛利率同比改善</td>
+        <td>杠杆</td><td>流动比率上升</td>
         <td style="text-align:center;font-weight:700">0</td><td>数据不足</td>
       </tr>
       
       <tr class="hi">
-        <td>运营效率</td><td>资产周转率同比改善</td>
-        <td style="text-align:center;font-weight:700">1</td><td>营收增长42%，资产周转率大概率改善</td>
+        <td>杠杆</td><td>未增发新股</td>
+        <td style="text-align:center;font-weight:700">1</td><td>未发现大规模增发</td>
+      </tr>
+      
+      <tr class="hi">
+        <td>运营</td><td>毛利率上升</td>
+        <td style="text-align:center;font-weight:700">1</td><td>AI芯片带动毛利率提升</td>
+      </tr>
+      
+      <tr class="">
+        <td>运营</td><td>资产周转率上升</td>
+        <td style="text-align:center;font-weight:700">0</td><td>数据不足</td>
       </tr>
       
     </tbody>
   </table></div>
   
 
-  <p>AMD当前估值处于历史高位：PE(TTM) 151.79x，Forward PE 52.40x，PEG 1.01x。EBIT/EV仅0.60%，在同类标的中排名靠后，表明盈利回报率较低。但考虑到营收增速42%和AI芯片市场的巨大潜力，市场给予较高溢价。DCF估值显示，在保守、基准、乐观三种情景下，当前股价已接近或超过基准目标价，上行空间有限。</p>
+  <p>AMD当前PE(TTM) 151.79倍，Forward PE 52.40倍，PEG 1.01x。EBIT/EV仅0.60%，在7只标的中排名第5，显示估值偏贵。但考虑到营收增速42%和AI芯片市场爆发，PEG接近1倍表明增长预期已合理定价。DCF估值显示当前价格处于基准与乐观之间，需关注业绩兑现能力。</p>
 
   
   <div class="bars">
@@ -403,7 +341,7 @@ footer{text-align:center;padding:16px 0 32px;font-size:11px;color:var(--muted)}
 
 <div class="card" id="s6">
   <div class="card-header"><div class="card-num">6</div><div class="card-title">🔮 未来一年展望</div><div class="card-sub">2026.05 — 2027.05 · 情景概率</div></div>
-  <p>AMD未来增长主要依赖AI加速器（MI400系列）、数据中心CPU份额提升以及客户端PC市场复苏。预计2026年营收增速将放缓至20-30%，但AI业务占比持续扩大。竞争方面，英伟达的生态优势仍是最大挑战，但AMD在开放标准和定制化芯片方面具备差异化机会。长期来看，若AI推理需求爆发，AMD有望成为主要受益者之一。</p>
+  <p>AMD未来12个月核心看点：MI300系列持续放量、下一代MI400架构、PC市场复苏、以及嵌入式业务整合。市场预期营收增速将维持30%以上，但竞争加剧和估值压力是主要风险。</p>
 
   
   <div class="t-wrap"><table>
@@ -413,19 +351,19 @@ footer{text-align:center;padding:16px 0 32px;font-size:11px;color:var(--muted)}
       <tr>
         <td>悲观</td><td>25%</td><td>$320</td>
         <td class="dn">-29.7%</td>
-        <td>AI需求不及预期，竞争加剧导致份额流失，营收增速降至15%以下</td>
+        <td>AI需求放缓，英特尔竞争加剧，毛利率承压</td>
       </tr>
       
       <tr>
         <td>基准</td><td>50%</td><td>$450</td>
         <td class="dn">-1.1%</td>
-        <td>AI业务稳步增长，数据中心和客户端业务温和复苏，估值回归合理水平</td>
+        <td>AI芯片持续增长，PC市场温和复苏，估值维持当前水平</td>
       </tr>
       
       <tr>
         <td>乐观</td><td>25%</td><td>$580</td>
         <td class="up">+27.4%</td>
-        <td>MI400系列大获成功，AI推理市场份额显著提升，营收增速超30%</td>
+        <td>MI400超预期，数据中心份额大幅提升，盈利超预期</td>
       </tr>
       
     </tbody>
@@ -445,13 +383,13 @@ footer{text-align:center;padding:16px 0 32px;font-size:11px;color:var(--muted)}
     <thead><tr><th>风险</th><th>概率</th><th>影响</th><th>应对</th></tr></thead>
     <tbody>
       
-      <tr><td>AI芯片竞争加剧</td><td>高</td><td>高</td><td>持续投入ROCm生态，与云厂商深度合作</td></tr>
+      <tr><td>AI芯片竞争加剧</td><td>高</td><td>英伟达主导地位稳固，AMD份额提升不及预期</td><td>持续研发投入，差异化架构</td></tr>
       
-      <tr><td>估值回调风险</td><td>中</td><td>高</td><td>关注Forward PE和PEG指标，等待更合理入场点</td></tr>
+      <tr><td>估值回调风险</td><td>中</td><td>PE 151倍，市场情绪转变可能导致大幅回调</td><td>关注业绩兑现，降低仓位</td></tr>
       
-      <tr><td>供应链依赖台积电</td><td>中</td><td>中</td><td>多元化代工合作，但短期难以改变</td></tr>
+      <tr><td>供应链风险</td><td>中</td><td>台积电产能紧张影响出货</td><td>多元化代工合作</td></tr>
       
-      <tr><td>PC市场复苏不及预期</td><td>低</td><td>中</td><td>数据中心业务占比已超50%，降低对PC的依赖</td></tr>
+      <tr><td>PC市场复苏不及预期</td><td>低</td><td>客户端业务拖累整体增长</td><td>数据中心业务占比提升</td></tr>
       
     </tbody>
   </table></div>
@@ -473,14 +411,8 @@ footer{text-align:center;padding:16px 0 32px;font-size:11px;color:var(--muted)}
     <div class="signal-rows">
       <div class="sr"><label>Action</label><span>HOLD</span></div>
       <div class="sr"><label>Conviction</label><span>MODERATE</span></div>
-      
-      <div class="sr"><label>Rank</label><span>加权综合分 4.55, #5/7</span></div>
-      
-      
-      <div class="sr"><label>Composite</label><span>#5/7</span></div>
-      
     </div>
-    <div class="signal-foot">Greenblatt 排名法 v2.0 · 教育性分析，不构成投资建议</div>
+    <div class="signal-foot">教育性分析，不构成投资建议</div>
   </div>
   
 </div>
@@ -493,16 +425,16 @@ footer{text-align:center;padding:16px 0 32px;font-size:11px;color:var(--muted)}
     <div class="verdict-grid">
       <div>
         <h3 style="color:#6ee7b7;font-size:12px;margin-bottom:10px">✅ 看多理由</h3>
-        <ul><li>营收增速+42%，AI芯片需求强劲</li><li>PEG 1.01x，增长与估值匹配</li><li>F-Score 6/9，财务安全稳健</li></ul>
+        <ul><li>营收增速+42%，AI芯片需求强劲</li><li>PEG 1.01x，增长定价合理</li><li>F-Score 6/9，财务安全</li></ul>
       </div>
       <div>
         <h3 style="color:#fca5a5;font-size:12px;margin-bottom:10px">⚠️ 看空理由</h3>
-        <ul><li>EBIT/EV仅0.60%，估值偏贵</li><li>ROIC 7.83%低于行业领先者</li><li>综合排名#5/7，在同类标的中吸引力一般</li></ul>
+        <ul><li>EBIT/EV仅0.60%，估值偏贵</li><li>ROIC 7.83%，资本效率一般</li><li>PE(TTM) 151倍，市场情绪敏感</li></ul>
       </div>
     </div>
     <div class="verdict-score">
-      <div class="big">#5/7</div>
-      <div class="lbl">四层加权排名 · F-Score 6/9 · 综合分 4.55</div>
+      <div class="big">6/9</div>
+      <div class="lbl">Piotroski F-Score · 财务健康度</div>
       <div class="rec">谨慎</div>
     </div>
   </div>
@@ -528,7 +460,7 @@ new Chart(document.getElementById('priceChart'),{
       
       {
         label:'股价',
-        data:[120.0, 180.0, 250.0, 310.0, 380.0, 420.0, 390.0, 440.0, 455.0],
+        data:[225.0, 280.0, 340.0, 380.0, 410.0, 430.0, 445.0, 450.0, 455.0],
         borderColor:'#2563eb',
         backgroundColor:'rgba(37,99,235,0.1)',
         fill:true,
@@ -572,7 +504,7 @@ new Chart(document.getElementById('valuationRadar'),{
       
       {
         label:'评分',
-        data:[29.0, 29.0, 50.0, 57.0, 30.0, 40.0, 50.0],
+        data:[29.0, 29.0, 50.0, 57.0, 40.0, 60.0, 50.0],
         borderColor:'#2563eb',
         backgroundColor:'rgba(37,99,235,0.15)',
         pointBackgroundColor:'#2563eb',

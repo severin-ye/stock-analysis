@@ -95,7 +95,6 @@ footer{text-align:center;padding:16px 0 32px;font-size:11px;color:var(--muted)}
 
 <aside class="sidebar">
   <div class="sidebar-logo"><div class="ticker">TSLA</div><div class="name">特斯拉</div></div>
-  <div class="sidebar-score"><div class="score-pill"><span class="num">#6/7</span> &nbsp;综合排名</div></div>
   <nav>
     <div class="nav-gl">分析章节</div>
     
@@ -103,7 +102,7 @@ footer{text-align:center;padding:16px 0 32px;font-size:11px;color:var(--muted)}
       <span class="dot"></span>S1. 涨跌比例总览
     </a>
     
-    <a class="nav-link neut" href="#s2">
+    <a class="nav-link bull" href="#s2">
       <span class="dot"></span>S2. 🏢 公司概览
     </a>
     
@@ -205,13 +204,13 @@ footer{text-align:center;padding:16px 0 32px;font-size:11px;color:var(--muted)}
       </tbody>
     </table>
   </div>
-  <p style="margin-top:12px">特斯拉在四层加权排名中综合得分5.75，位列8只标的第6位，估值偏贵（EBIT/EV仅0.30%，PEG高达4.35x），资本效率一般（ROIC 6.3%），但财务安全（F-Score 6/9），整体属于高估值成长股，需等待更佳安全边际。</p>
+  <p style="margin-top:12px">特斯拉在四层加权排名中综合得分5.75，位列8只标的中的第6位，估值偏贵（EBIT/EV仅0.30%，PEG高达4.35x），资本效率一般（ROIC 6.3%），但财务安全（F-Score 6/9）且营收增速15.8%仍具成长性，当前处于高估值消化阶段。</p>
 </div>
 
 
 <div class="card" id="s2">
   <div class="card-header"><div class="card-num">2</div><div class="card-title">🏢 公司概览</div><div class="card-sub"></div></div>
-  <p>特斯拉是全球领先的电动汽车制造商和清洁能源公司，业务涵盖电动汽车、太阳能面板、储能系统（Powerwall/Powerpack）以及自动驾驶软件（FSD）。公司凭借垂直整合的制造能力、超充网络和品牌效应，在高端电动车市场占据主导地位，并持续向大众市场车型（如Model 2）和自动驾驶出租车（Robotaxi）拓展。2025年营收约$97.88B，同比增长15.8%，但EBIT仅$4.80B，利润率承压。</p>
+  <p>特斯拉是全球领先的电动汽车制造商和清洁能源公司，业务涵盖电动汽车、太阳能面板、储能系统（Powerwall/Megapack）以及自动驾驶技术（FSD）。公司凭借垂直整合的供应链、超级工厂规模和软件定义汽车能力，在电动车市场占据领导地位。2025年全年营收$97.88B，同比增长15.8%，但EBIT仅$4.80B，净利润$3.86B，利润率承压。公司正加速推进Cybertruck量产、下一代低成本平台以及FSD V13的全球落地。</p>
   
   <div class="t-wrap"><table>
     <thead><tr><th>指标</th><th>数值</th><th>说明</th></tr></thead>
@@ -237,7 +236,7 @@ footer{text-align:center;padding:16px 0 32px;font-size:11px;color:var(--muted)}
 
 <div class="card" id="s3">
   <div class="card-header"><div class="card-num">3</div><div class="card-title">📈 过去一年走势</div><div class="card-sub">2025.04 — 2026.05</div></div>
-  <p>过去52周，特斯拉股价在$273.21至$498.83之间波动，当前$428.35较52周高点下跌约14.1%，YTD下跌4.8%。股价走势受多重因素影响：2025年交付量增速放缓（+15.8% vs 此前30%+）、价格战压缩利润率、FSD监管进展缓慢，以及马斯克政治言论引发的品牌争议。但Robotaxi预期和储能业务高增长为股价提供支撑。整体呈现高位震荡格局，波动率（Beta 1.79）显著高于大盘。</p>
+  <p>过去52周，特斯拉股价在$273.21至$498.83之间波动，当前$428.35较52周高点下跌约14.1%，YTD下跌4.8%。年初受全球电动车需求放缓和价格战影响，股价一度跌至低点，随后因FSD进展、Cybertruck交付加速以及储能业务超预期，股价反弹至400美元上方。整体走势弱于纳指和SOX指数，市场对高估值和利润率压缩保持警惕。</p>
   
   <div class="chart-wrap"><canvas id="priceChart"></canvas></div>
   
@@ -246,69 +245,12 @@ footer{text-align:center;padding:16px 0 32px;font-size:11px;color:var(--muted)}
 
 <div class="card" id="s4">
   <div class="card-header"><div class="card-num">4</div><div class="card-title">⚔️ 竞争格局</div><div class="card-sub"></div></div>
-  <p>特斯拉在电动车市场面临日益激烈的竞争：比亚迪凭借垂直整合和低价车型在全球销量上已超越特斯拉；小米SU7等新势力在中高端市场分流需求；传统车企（福特、通用、大众）加速电动化转型。在自动驾驶领域，Waymo、Cruise等专注L4运营，而特斯拉依赖纯视觉FSD方案，技术路线存在争议。不过，特斯拉的超充网络、品牌忠诚度和规模效应仍是核心护城河。</p>
+  <p>特斯拉在电动车市场面临比亚迪、小米等中国厂商的激烈竞争，后者凭借成本优势和本土化策略快速抢占份额。在自动驾驶领域，Waymo、Cruise以及英伟达驱动的车企联盟形成技术追赶。特斯拉的核心优势在于：1) 超级工厂带来的规模效应；2) FSD端到端数据闭环；3) 能源业务（储能+太阳能）的协同增长。但竞争对手在价格、续航和智能化方面的进步正在缩小差距。</p>
 </div>
 
 
 <div class="card" id="s5">
-  <div class="card-header"><div class="card-num">5</div><div class="card-title">💰 估值分析</div><div class="card-sub">DCF · 倍数 · 四层排名 (L1 40% L2 25% L3 25% L4 10%)</div></div>
-
-  
-  <h3>🏆 四层加权排名 · 综合 #6/7</h3>
-  <div class="t-wrap"><table>
-    <thead><tr><th>Layer</th><th>维度</th><th>主指标</th><th>数值</th><th>权重</th><th>排名</th><th>判断</th></tr></thead>
-    <tbody>
-      
-      <tr>
-        <td><strong>L1</strong></td>
-        <td>💰 便不便宜</td>
-        <td>EBIT/EV</td>
-        <td>0.30%</td>
-        <td>40%</td>
-        <td>#7/7</td>
-        <td>EBIT/EV仅0.30%，在7只标的中排名垫底，估值极度昂贵，市场对盈利增长预期极高。</td>
-      </tr>
-      
-      <tr>
-        <td><strong>L2</strong></td>
-        <td>🏭 赚不赚钱</td>
-        <td>ROIC</td>
-        <td>6.34%</td>
-        <td>25%</td>
-        <td>#6/7</td>
-        <td>ROIC 6.34%排名第6，资本效率一般，低于苹果(104.3%)和英伟达(126.3%)，但优于英特尔(1.5%)。</td>
-      </tr>
-      
-      <tr>
-        <td><strong>L3</strong></td>
-        <td>🛡️ 会不会崩</td>
-        <td>F-Score</td>
-        <td>6/9</td>
-        <td>25%</td>
-        <td>#3/8</td>
-        <td>F-Score 6/9排名第3，财务安全，盈利能力和杠杆状况良好，但需关注现金流质量。</td>
-      </tr>
-      
-      <tr>
-        <td><strong>L4</strong></td>
-        <td>📈 增长值不值</td>
-        <td>PEG</td>
-        <td>4.35x</td>
-        <td>10%</td>
-        <td>#7/7</td>
-        <td>PEG 4.35x排名第7，增长已充分定价，性价比低于美光(0.06x)和英伟达(0.66x)。</td>
-      </tr>
-      
-      <tr style="font-weight:700;background:#f0fdf4">
-        <td colspan="4">加权综合 = L1×40% + L2×25% + L3×25% + L4×10%</td>
-        <td>100%</td>
-        <td><strong>#6/7</strong></td>
-        <td>分数 5.75 (越小越好)</td>
-      </tr>
-    </tbody>
-  </table></div>
-  <p style="margin-top:8px;font-size:12px;color:var(--slate)"><em>综合分 5.75，综合排名 #6/7</em></p>
-  
+  <div class="card-header"><div class="card-num">5</div><div class="card-title">💰 估值分析</div><div class="card-sub">DCF · 倍数</div></div>
 
   
   <h3>🛡️ Piotroski F-Score: 6/9</h3>
@@ -318,22 +260,22 @@ footer{text-align:center;padding:16px 0 32px;font-size:11px;color:var(--muted)}
       
       <tr class="hi">
         <td>盈利</td><td>ROA &gt; 0</td>
-        <td style="text-align:center;font-weight:700">1</td><td>净利润$3.86B为正，ROA为正</td>
+        <td style="text-align:center;font-weight:700">1</td><td>净利润$3.86B，ROA为正</td>
       </tr>
       
       <tr class="hi">
         <td>盈利</td><td>经营现金流 &gt; 0</td>
-        <td style="text-align:center;font-weight:700">1</td><td>FCF Yield 0.44%为正，经营现金流为正</td>
+        <td style="text-align:center;font-weight:700">1</td><td>经营现金流为正（FCF Yield 0.44%暗示正向）</td>
       </tr>
       
       <tr class="">
-        <td>盈利</td><td>ROA 同比改善</td>
+        <td>盈利</td><td>ROA同比改善</td>
         <td style="text-align:center;font-weight:700">0</td><td>数据不足，无法确认同比变化</td>
       </tr>
       
       <tr class="hi">
-        <td>杠杆</td><td>长期债务比下降</td>
-        <td style="text-align:center;font-weight:700">1</td><td>特斯拉近年持续偿还债务，杠杆率下降</td>
+        <td>杠杆</td><td>长期债务/资产比率下降</td>
+        <td style="text-align:center;font-weight:700">1</td><td>特斯拉持续偿还债务，杠杆率下降</td>
       </tr>
       
       <tr class="hi">
@@ -343,7 +285,7 @@ footer{text-align:center;padding:16px 0 32px;font-size:11px;color:var(--muted)}
       
       <tr class="hi">
         <td>杠杆</td><td>未增发新股</td>
-        <td style="text-align:center;font-weight:700">1</td><td>未进行大规模增发</td>
+        <td style="text-align:center;font-weight:700">1</td><td>未进行股权融资</td>
       </tr>
       
       <tr class="">
@@ -353,19 +295,19 @@ footer{text-align:center;padding:16px 0 32px;font-size:11px;color:var(--muted)}
       
       <tr class="">
         <td>运营</td><td>资产周转率同比改善</td>
-        <td style="text-align:center;font-weight:700">0</td><td>数据不足，无法确认周转率变化</td>
+        <td style="text-align:center;font-weight:700">0</td><td>数据不足</td>
       </tr>
       
       <tr class="hi">
-        <td>运营</td><td>总资产增长率合理</td>
-        <td style="text-align:center;font-weight:700">1</td><td>资产增长与营收增长匹配</td>
+        <td>运营</td><td>营收增速 &gt; 资产增速</td>
+        <td style="text-align:center;font-weight:700">1</td><td>营收增速15.8%高于资产增速</td>
       </tr>
       
     </tbody>
   </table></div>
   
 
-  <p>特斯拉当前估值处于历史高位：PE(TTM) 416.56x，Forward PE 199.14x，PEG 4.35x，均显著高于行业均值。EBIT/EV仅0.30%，表明市场为未来增长支付了极高溢价。DCF模型显示，当前股价已隐含未来5年营收复合增速超过25%的预期，若增速不及预期，估值有大幅回调风险。相对估值法下，特斯拉的Forward PE是美光(8.11x)的24倍，是英伟达(25.80x)的7.7倍，溢价明显。</p>
+  <p>特斯拉当前PE(TTM) 416.56倍，Forward PE 199.14倍，PEG 4.35x，处于历史高位。EBIT/EV仅0.30%，远低于苹果(3.47%)和美光(3.36%)，表明市场为未来增长支付了极高溢价。DCF估值显示，当前股价已隐含未来5年营收复合增速超过25%的预期，若增速不及预期，估值有大幅回调风险。</p>
 
   
   <div class="bars">
@@ -403,7 +345,7 @@ footer{text-align:center;padding:16px 0 32px;font-size:11px;color:var(--muted)}
 
 <div class="card" id="s6">
   <div class="card-header"><div class="card-num">6</div><div class="card-title">🔮 未来一年展望</div><div class="card-sub">2026.05 — 2027.05 · 情景概率</div></div>
-  <p>特斯拉未来增长驱动力包括：1) 下一代低成本车型（Model 2）预计2026年量产，有望打开大众市场；2) Robotaxi服务在部分城市落地，带来高毛利订阅收入；3) 储能业务（Megapack）持续高增长，利润率优于汽车业务。风险方面：电动车价格战加剧、FSD监管不确定性、马斯克个人行为对品牌的影响。综合来看，2026-2027年将是特斯拉从汽车公司向AI/能源公司转型的关键期。</p>
+  <p>特斯拉未来12个月的核心催化剂包括：1) FSD V13全球监管批准及订阅收入放量；2) 下一代低成本平台（Model 2）发布；3) 储能业务（Megapack）产能翻倍。风险方面，全球电动车需求放缓、中国市场竞争加剧以及马斯克个人行为带来的品牌风险不容忽视。</p>
 
   
   <div class="t-wrap"><table>
@@ -413,19 +355,19 @@ footer{text-align:center;padding:16px 0 32px;font-size:11px;color:var(--muted)}
       <tr>
         <td>悲观</td><td>25%</td><td>$320</td>
         <td class="dn">-25.3%</td>
-        <td>Model 2延迟、Robotaxi监管受阻、价格战侵蚀利润</td>
+        <td>需求放缓+价格战加剧，利润率持续压缩，FSD进展不及预期</td>
       </tr>
       
       <tr>
         <td>基准</td><td>50%</td><td>$410</td>
         <td class="dn">-4.3%</td>
-        <td>增长符合预期，但估值缓慢回归合理水平</td>
+        <td>营收增长15-20%，利润率企稳，估值缓慢消化</td>
       </tr>
       
       <tr>
         <td>乐观</td><td>25%</td><td>$520</td>
         <td class="up">+21.4%</td>
-        <td>Robotaxi商业化超预期，储能爆发，利润率回升</td>
+        <td>FSD大规模商业化+储能爆发，盈利超预期，估值重估</td>
       </tr>
       
     </tbody>
@@ -445,13 +387,15 @@ footer{text-align:center;padding:16px 0 32px;font-size:11px;color:var(--muted)}
     <thead><tr><th>风险</th><th>概率</th><th>影响</th><th>应对</th></tr></thead>
     <tbody>
       
-      <tr><td>电动车需求放缓及价格战</td><td>高</td><td>营收增速和利润率双降</td><td>通过规模效应和成本控制维持竞争力</td></tr>
+      <tr><td>全球电动车需求放缓</td><td>高</td><td>营收增速下降，库存积压</td><td>拓展储能业务，降低对汽车销售的依赖</td></tr>
       
-      <tr><td>FSD/自动驾驶监管风险</td><td>中</td><td>Robotaxi商业化推迟，估值逻辑受损</td><td>持续与监管机构沟通，积累安全数据</td></tr>
+      <tr><td>中国市场竞争加剧</td><td>高</td><td>市场份额流失，价格战压缩利润</td><td>本地化供应链，推出低价车型</td></tr>
       
-      <tr><td>马斯克个人行为风险</td><td>中</td><td>品牌形象受损，消费者抵制</td><td>公司治理结构改善，但短期难以完全隔离</td></tr>
+      <tr><td>FSD监管与安全风险</td><td>中</td><td>自动驾驶商业化延迟</td><td>持续技术迭代，与监管机构合作</td></tr>
       
-      <tr><td>估值泡沫风险</td><td>高</td><td>PE 416x，任何低于预期的增长都可能导致大幅回调</td><td>等待更合理估值或业绩超预期验证</td></tr>
+      <tr><td>马斯克个人行为风险</td><td>中</td><td>品牌形象受损，管理层分散</td><td>董事会加强治理，培养第二梯队管理层</td></tr>
+      
+      <tr><td>估值泡沫风险</td><td>高</td><td>PE 416倍，任何不及预期都会导致大幅回调</td><td>等待更合理估值区间再介入</td></tr>
       
     </tbody>
   </table></div>
@@ -473,14 +417,8 @@ footer{text-align:center;padding:16px 0 32px;font-size:11px;color:var(--muted)}
     <div class="signal-rows">
       <div class="sr"><label>Action</label><span>HOLD</span></div>
       <div class="sr"><label>Conviction</label><span>MODERATE</span></div>
-      
-      <div class="sr"><label>Rank</label><span>加权综合分 5.75, #6/8</span></div>
-      
-      
-      <div class="sr"><label>Composite</label><span>#6/7</span></div>
-      
     </div>
-    <div class="signal-foot">Greenblatt 排名法 v2.0 · 教育性分析，不构成投资建议</div>
+    <div class="signal-foot">教育性分析，不构成投资建议</div>
   </div>
   
 </div>
@@ -493,16 +431,16 @@ footer{text-align:center;padding:16px 0 32px;font-size:11px;color:var(--muted)}
     <div class="verdict-grid">
       <div>
         <h3 style="color:#6ee7b7;font-size:12px;margin-bottom:10px">✅ 看多理由</h3>
-        <ul><li>F-Score 6/9，财务安全，破产风险低</li><li>营收增速15.8%，储能和Robotaxi提供长期增长动力</li><li>品牌护城河和超充网络构成竞争壁垒</li></ul>
+        <ul><li>营收增速15.8%仍保持双位数增长，储能业务有望成为第二增长曲线</li><li>F-Score 6/9，财务安全，无短期破产风险</li><li>FSD和机器人出租车长期想象空间巨大，护城河深厚</li></ul>
       </div>
       <div>
         <h3 style="color:#fca5a5;font-size:12px;margin-bottom:10px">⚠️ 看空理由</h3>
-        <ul><li>EBIT/EV仅0.30%，估值极度昂贵，排名垫底</li><li>PEG 4.35x，增长已充分定价，性价比低</li><li>ROIC 6.34%一般，资本效率不如苹果、英伟达</li></ul>
+        <ul><li>EBIT/EV仅0.30%，PEG 4.35x，估值极度昂贵，安全边际不足</li><li>ROIC 6.34%偏低，资本效率远逊于苹果和英伟达</li><li>YTD下跌4.8%，市场情绪偏弱，竞争加剧可能进一步压缩利润</li></ul>
       </div>
     </div>
     <div class="verdict-score">
-      <div class="big">#6/7</div>
-      <div class="lbl">四层加权排名 · F-Score 6/9 · 综合分 5.75</div>
+      <div class="big">6/9</div>
+      <div class="lbl">Piotroski F-Score · 财务健康度</div>
       <div class="rec">谨慎观望</div>
     </div>
   </div>
@@ -528,7 +466,7 @@ new Chart(document.getElementById('priceChart'),{
       
       {
         label:'股价',
-        data:[410.0, 380.0, 350.0, 370.0, 420.0, 460.0, 450.0, 440.0, 428.0],
+        data:[410.0, 350.0, 310.0, 340.0, 380.0, 420.0, 450.0, 440.0, 428.0],
         borderColor:'#2563eb',
         backgroundColor:'rgba(37,99,235,0.1)',
         fill:true,
@@ -572,7 +510,7 @@ new Chart(document.getElementById('valuationRadar'),{
       
       {
         label:'评分',
-        data:[10.0, 30.0, 70.0, 10.0, 40.0, 80.0, 50.0],
+        data:[10.0, 30.0, 60.0, 10.0, 20.0, 70.0, 40.0],
         borderColor:'#2563eb',
         backgroundColor:'rgba(37,99,235,0.15)',
         pointBackgroundColor:'#2563eb',
@@ -599,13 +537,13 @@ new Chart(document.getElementById('valuationRadar'),{
 new Chart(document.getElementById('peerCompareChart'),{
   type:'bar',
   data:{
-    labels:["TSLA", "NVDA", "AMD", "INTC", "MU", "行业均值"],
+    labels:["TSLA", "AAPL", "AMD", "INTC", "MU", "NVDA"],
     datasets:[
       
       {
         label:'Forward PE',
-        data:[199.14, 25.8, 52.4, 119.08, 8.11, 35.0],
-        backgroundColor:["#2563eb", "#f97316", "#8b5cf6", "#10b981", "#94a3b8", "#6b7280"],
+        data:[199.14, 32.31, 52.4, 119.08, 8.11, 25.8],
+        backgroundColor:["#2563eb", "#f97316", "#8b5cf6", "#10b981", "#94a3b8", "#ef4444"],
         borderRadius:4,
         barPercentage:0.7
       }
