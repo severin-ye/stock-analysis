@@ -12,20 +12,43 @@
 股市分析/
 ├── AGENTS.md              ← 本文件
 ├── index.html             ← 导航首页（本地 localhost:8888）
-├── InvestSkill/            ← 分析框架源码（MIT，含20个prompt、CSS模板）
-│   ├── _template.html      ← HTML 报告 CSS 主模板（所有报告共用）
-│   ├── prompts/            ← 20个分析框架（stock-eval, dcf-valuation...）
-│   ├── CLAUDE.md           ← InvestSkill 自身的知识库
-│   └── output/             ← 示例报告
-├── 英伟达/                  ← NVDA（8家公司各含01整体/02过去/03未来 + HTML报告）
-├── 苹果/                   ← AAPL
-├── 特斯拉/                 ← TSLA
-├── 英特尔/                 ← INTC
-├── AMD/                    ← AMD
-├── 美光/                   ← MU
-├── 小米/                   ← 1810.HK
-├── 比特币/                 ← BTC
-└── .sisyphus/             ← 会话数据
+├── Stock Kit/              ← 核心引擎（Skill + Tool 分离）
+│   ├── InvestSkill/        ← 方法论层（prompts、CSS、Jinja2 模板）
+│   │   ├── _template.html  ← HTML 报告 CSS 主模板
+│   │   ├── prompts/        ← 20个分析框架（stock-eval, dcf-valuation...）
+│   │   ├── templates/      ← Jinja2 报告模板 (report.jinja2)
+│   │   └── report_engine/  ← LangGraph 流水线 (schema/stages/pipeline)
+│   ├── tools/              ← 实现层（数据采集、排名、渲染、验证）
+│   │   ├── fetcher.py      ← marketbeat/trefis 数据采集 + JSON 缓存
+│   │   ├── ranker.py       ← 纯数学四层加权排名 (无 LLM)
+│   │   ├── renderer.py     ← Jinja2 → HTML 渲染
+│   │   ├── validator.py    ← HTML 完整性验证
+│   │   └── pipeline.py     ← 编排器 (fetch→rank→LLM→render→validate)
+│   └── data/               ← 缓存数据
+│       └── prices.json     ← 8 家标的实时价格缓存 (LLM 用 webfetch 填充)
+├── 英伟达/ 苹果/ 特斯拉/ ... ← 报告输出目录
+└── .sisyphus/              ← 会话数据 + 日志
+```
+
+### Skill ↔ Tool 联动
+
+```
+Skill (InvestSkill)         Tool (tools/)
+├── 指定 marketbeat 数据源 → fetcher.py 按此抓取
+├── 定义四层加权公式      → ranker.py 纯数学实现
+├── 提供 Jinja2 模板      → renderer.py 渲染用
+└── 指定 8-sections 格式  → validator.py 验证
+```
+
+### Pipeline 执行流程
+
+```
+1. scaffold → 识别公司、初始化 StockReport 壳
+2. fetch    → 读 Stock Kit/data/prices.json (LLM 用 webfetch 填充)
+3. rank     → 纯 Python 计算四层排名 (无 LLM, 不幻觉)
+4. LLM      → 注入真实数据 + 预计算排名, LLM 仅生成叙述文本
+5. render   → Jinja2 模板渲染 HTML
+6. validate → 检查 8 sections + verdict + charts 完整性
 ```
 
 ## 分析档位（触发词 → 输出）
@@ -53,10 +76,13 @@
 - **HTML 报告**：8节（S1-S8+verdict），CSS 来自 `InvestSkill/_template.html`，评分区块替换为三层排名+F-Score卡
 - **HTML 验证（🚨 必须）**：每次生成/修改 HTML 报告后，**必须**运行验证：
   ```bash
-  python3 /home/severin/Codelib/股市分析/InvestSkill/validate_html.py <报告路径>
+  PYTHONPATH="Stock Kit:Stock Kit/InvestSkill" python3 -c "
+from tools.validator import validate_html_file
+passed, issues = validate_html_file('<报告路径>')
+print('OK' if passed else 'FAIL'); [print(f'  {i}') for i in issues]
+"
   ```
   验证失败 → 检查缺失 sections → 修复后重新验证。严禁交付未通过验证的 HTML 报告。
-  原因：LLM 单次输出长 HTML 容易丢失中间 section（如苹果 260510 报告缺 S3/S4/S6/S7）。
 
 ### 批量分析执行策略（🚫 禁止并发派发）
 - **3+ 家公司同时分析时，必须逐家自行执行，禁止 `task(background=true)` 并发派发**
@@ -91,11 +117,20 @@
 cd /home/severin/Codelib/股市分析 && python3 -m http.server 8888
 # 访问 http://localhost:8888/index.html
 
+# 运行分析 Pipeline (dry-run 预览, 不调用 LLM)
+PYTHONPATH="Stock Kit:Stock Kit/InvestSkill" python3 -m tools.pipeline 英伟达 --dry-run
+
+# 运行分析 Pipeline (完整, 调用 LLM)
+PYTHONPATH="Stock Kit:Stock Kit/InvestSkill" python3 -m tools.pipeline 英伟达
+
+# HTML 验证
+python3 -m tools.pipeline validate <报告路径>
+
 # Git
 cd /home/severin/Codelib/股市分析 && git push origin main
 
 # 运行 InvestSkill 测试
-cd InvestSkill && npm test
+cd "Stock Kit/InvestSkill" && npm test
 ```
 
 ## 评分体系（四层加权排名 v3.0）
