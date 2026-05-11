@@ -22,9 +22,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent / 'InvestSkill'))
 from report_engine.schema import StockReport, ModuleStatus, AssetCategory, ChartType, ChartDef, ChartDataset
 from report_engine.stages.scaffold import scaffold
 from report_engine.stages.render import render_to_file
-from report_engine.stages.validate import validate
 
-from tools.fetcher import fetch_all_8, PriceSnapshot, TICKER_MAP
+from tools.fetcher import fetch_all_8, PriceSnapshot, TICKER_MAP, YF_TICKER_MAP
 from tools.ranker import compute_greenblatt, compute_crypto_ranking, RankingResult
 
 BASE_DIR = Path('/home/severin/Codelib/股市分析')
@@ -62,7 +61,9 @@ def build_real_data_prompt(company_name: str, ticker: str, prices: dict[str, Pri
         return ""
 
     name_map = {'NVDA': '英伟达', 'AAPL': '苹果', 'INTC': '英特尔', 'TSLA': '特斯拉',
-                'AMD': 'AMD', 'MU': '美光', '1810.HK': '小米', 'BTC': '比特币'}
+                'AMD': 'AMD', 'MU': '美光', '1810.HK': '小米', 'BTC': '比特币',
+                'LLY': '礼来', 'AVGO': '博通', '000660.KS': 'SK海力士',
+                '005930.KS': '三星电子', '207940.KS': '三星生物制药', '005380.KS': '现代汽车'}
 
     lines = [f"""
 ## ⚠️ 反幻觉规则 — 必须遵守
@@ -164,6 +165,79 @@ def build_real_data_prompt(company_name: str, ticker: str, prices: dict[str, Pri
 """)
 
     return "".join(lines)
+
+
+def yfinance_symbol_for_ticker(ticker: str) -> str:
+    for yf_symbol, internal_ticker in YF_TICKER_MAP.items():
+        if internal_ticker == ticker:
+            return yf_symbol
+    return ticker
+
+
+def fetch_price_history_points(ticker: str, current_price: float, logger: logging.Logger) -> tuple[list[str], list[float]]:
+    try:
+        import yfinance as yf
+    except ImportError:
+        logger.warning("  yfinance 未安装，无法获取过去一年真实走势")
+        return [], []
+
+    yf_symbol = yfinance_symbol_for_ticker(ticker)
+    hist = yf.Ticker(yf_symbol).history(period='1y', interval='1mo', auto_adjust=True)
+    if hist.empty or 'Close' not in hist:
+        logger.warning(f"  {ticker}: yfinance 历史价格为空，跳过真实走势覆盖")
+        return [], []
+
+    closes = hist['Close'].dropna()
+    if closes.empty:
+        logger.warning(f"  {ticker}: yfinance Close 序列为空，跳过真实走势覆盖")
+        return [], []
+
+    labels = [idx.strftime('%y.%m') for idx in closes.index]
+    data = [round(float(v), 2) for v in closes.values]
+    current_label = datetime.now().strftime('%y.%m')
+    if labels[-1] != current_label or abs(data[-1] - current_price) / current_price > 0.01:
+        labels.append(current_label)
+        data.append(round(float(current_price), 2))
+
+    logger.info(f"  {ticker}: 过去一年走势来自 yfinance {yf_symbol}，{len(data)} 个节点")
+    return labels, data
+
+
+def apply_real_price_history(report: StockReport, price_info: PriceSnapshot | None,
+                             logger: logging.Logger) -> StockReport:
+    if not price_info or not price_info.price:
+        logger.warning("  缺少当前价格，无法覆盖过去一年走势")
+        return report
+
+    labels, data = fetch_price_history_points(report.ticker, price_info.price, logger)
+    if not labels or not data:
+        return report
+
+    start = data[0]
+    end = data[-1]
+    high = max(data)
+    low = min(data)
+    change_pct = (end / start - 1) * 100 if start else 0.0
+    report.s3_body_html = (
+        f"<p>过去一年走势采用 Yahoo Finance/yfinance 月度复权收盘价，并以当前缓存价格校准最后一个节点。"
+        f"{report.ticker} 从 ${start:.2f} 到 ${end:.2f}，期间高点 ${high:.2f}、低点 ${low:.2f}，"
+        f"区间涨跌 {change_pct:+.1f}%。该图表每个节点由程序注入，非 LLM 生成。</p>"
+    )
+
+    price_chart = ChartDef(
+        chart_id='priceChart', chart_type=ChartType.LINE, section_id='s3',
+        labels=labels,
+        datasets=[ChartDataset(label=report.ticker, data=data, color='#2563eb', fill=True, tension=0.3)],
+        y_axis_label='$', y_axis_format='$', tooltip_prefix='$', tooltip_suffix='',
+    )
+
+    for idx, chart in enumerate(report.charts):
+        if chart.chart_id == 'priceChart':
+            report.charts[idx] = price_chart
+            break
+    else:
+        report.charts.insert(0, price_chart)
+    return report
 
 
 OUTPUT_SCHEMA = """
@@ -457,17 +531,20 @@ def run_analysis(company_name: str, dry_run: bool = False) -> Optional[str]:
     logger.info("[Stage 3: LLM] 注入真实数据生成报告")
     real_data_prompt = build_real_data_prompt(company_name, report.ticker, prices, rankings)
     report = run_llm_with_real_data(report, real_data_prompt, logger)
+    report = apply_real_price_history(report, my_data, logger)
 
     # Stage 4: Render
     logger.info("[Stage 4: render] 生成 HTML")
     today = datetime.now().strftime('%y%m%d')
-    output_path = BASE_DIR / company_name / f'{today}_综合分析报告.html'
+    output_dir = BASE_DIR / '分析输出' / company_name
+    output_dir.mkdir(parents=True, exist_ok=True)
+    output_path = output_dir / f'{today}_综合分析报告.html'
     html_path = render_to_file(report, str(output_path), logger=logger)
 
     # Stage 5: Validate
     logger.info("[Stage 5: validate] HTML 完整性检查")
-    from tools.validator import validate_html_file
-    passed, issues = validate_html_file(html_path)
+    from InvestSkill.report_engine.stages.validate import validate
+    passed, issues = validate(None, html_path)
     logger.info(f"  通过: {'是' if passed else '否'}")
     for i in issues:
         logger.info(f"  [{i}]")
@@ -485,7 +562,24 @@ def run_analysis(company_name: str, dry_run: bool = False) -> Optional[str]:
 if __name__ == '__main__':
     if len(sys.argv) < 2:
         print('用法: python -m tools.pipeline <公司名> [--dry-run]')
+        print('      python -m tools.pipeline index     # 再生index.html')
+        print('      python -m tools.pipeline validate <报告路径>')
         sys.exit(1)
+    if sys.argv[1] == 'index':
+        from tools.index_generator import regenerate
+        regenerate()
+        sys.exit(0)
+    if sys.argv[1] == 'validate':
+        if len(sys.argv) < 3:
+            print('用法: python -m tools.pipeline validate <报告路径>')
+            sys.exit(1)
+        from report_engine.stages.validate import validate
+        html_path = sys.argv[2]
+        passed, issues = validate(None, html_path)
+        print('✅ 通过' if passed else '❌ 未通过')
+        for i in issues:
+            print(f'  {i}')
+        sys.exit(0 if passed else 1)
     company = sys.argv[1]
     dry = '--dry-run' in sys.argv
     run_analysis(company, dry_run=dry)

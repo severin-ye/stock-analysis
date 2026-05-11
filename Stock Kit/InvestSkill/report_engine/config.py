@@ -4,7 +4,6 @@ import json
 from pathlib import Path
 
 OPENCODE_CONFIG = Path.home() / '.config' / 'opencode' / 'opencode.json'
-SECRETS_DIR = Path.home() / '.opencode-secrets'
 
 
 def _read_secret(path: str) -> str:

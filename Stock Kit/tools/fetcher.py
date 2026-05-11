@@ -1,9 +1,9 @@
-"""数据采集: marketbeat.com + trefis.com → 结构化数据
+"""数据采集: yfinance (实时) → JSON 缓存 → ranker
 
-混合架构:
-  1. Python 层: 从 JSON 缓存读取 (Stock Kit/data/prices.json)
-  2. LLM 层: 用 webfetch 工具填充 JSON 缓存
-  3. fallback: HTML regex 解析 (marketbeat.com)
+三层架构:
+  1. yfinance: 纯 Python 获取价格/PE/市值 (全市场, 无需 AI)
+  2. JSON 缓存: Stock Kit/data/prices.json (yfinance 写入)
+  3. 专业源: EBIT/EV, ROIC, F-Score, PEG → marketbeat/stockanalysis (仍由 AI webfetch 补充)
 
 返回 PriceSnapshot 字典，传给 ranker 和 LLM prompt。
 """
@@ -14,9 +14,32 @@ import re
 from dataclasses import dataclass, asdict
 from pathlib import Path
 from typing import Optional
+from datetime import datetime, timedelta
+
+try:
+    import yfinance as yf
+    HAS_YFINANCE = True
+except ImportError:
+    HAS_YFINANCE = False
 
 DATA_DIR = Path(__file__).parent.parent / 'data'
 PRICES_JSON = DATA_DIR / 'prices.json'
+
+# yfinance ticker → 内部 ticker 映射
+YF_TICKER_MAP: dict[str, str] = {
+    'NVDA': 'NVDA', 'AAPL': 'AAPL', 'TSLA': 'TSLA',
+    'INTC': 'INTC', 'AMD': 'AMD', 'MU': 'MU',
+    'LLY': 'LLY', 'AVGO': 'AVGO',
+    '0700.HK': '1810.HK',  # 小米 yfinance 用 1810.HK, 内部 key 也是 1810.HK
+    '1810.HK': '1810.HK',
+    '9988.HK': '9988.HK', '3690.HK': '3690.HK', '1211.HK': '1211.HK',
+    '7203.T': '7203.T', '6758.T': '6758.T',
+    '005930.KS': '005930.KS', '000660.KS': '000660.KS',
+    '207940.KS': '207940.KS', '005380.KS': '005380.KS',
+}
+
+# 哪些 ticker 走 yfinance
+YF_SYMBOLS = list(YF_TICKER_MAP.keys())
 
 
 @dataclass
@@ -81,9 +104,104 @@ TICKER_MAP: dict[str, str] = {
     '美光': 'MU',
     '小米': '1810.HK',
     '比特币': 'BTC',
+    '礼来': 'LLY',
+    'SK海力士': '000660.KS',
+    '三星电子': '005930.KS',
+    '三星生物制药': '207940.KS',
+    '现代汽车': '005380.KS',
+    '博通': 'AVGO',
 }
 
 TICKER_TO_NAME = {v: k for k, v in TICKER_MAP.items()}
+
+
+def fetch_yfinance(symbols: list[str] | None = None, logger=None) -> dict[str, PriceSnapshot]:
+    """纯 Python 实时采集 yfinance (无 AI 依赖)
+
+    覆盖: 美股/港股/日股/韩股 — 价格/PE/市值/52周/Beta/EPS
+    不覆盖: EBIT/EV, ROIC, F-Score, PEG (仍需专业源)
+    """
+    log = logger
+    if not HAS_YFINANCE:
+        if log:
+            log.warning("yfinance 未安装, 跳过实时采集")
+        return {}
+
+    syms = symbols or YF_SYMBOLS
+    results: dict[str, PriceSnapshot] = {}
+
+    for sym in syms:
+        try:
+            info = yf.Ticker(sym).info
+            internal_key = YF_TICKER_MAP.get(sym, sym)
+            cur = info.get('currency', 'USD')
+            cur_symbol = {'USD': '$', 'HKD': 'HK$', 'JPY': '¥', 'KRW': '₩'}.get(cur, '$')
+            price = info.get('currentPrice') or info.get('regularMarketPrice') or 0.0
+            market_cap = info.get('marketCap')
+            cap_str = ''
+            if market_cap and market_cap > 0:
+                if market_cap >= 1e12:
+                    cap_str = f'{market_cap/1e12:.2f}T'
+                else:
+                    cap_str = f'{market_cap/1e9:.2f}B'
+
+            snap = PriceSnapshot(
+                ticker=internal_key,
+                price=float(price) if price else 0.0,
+                currency=cur_symbol,
+                market_cap=cap_str,
+                pe_ratio=str(info['trailingPE']) if info.get('trailingPE') else '',
+                forward_pe=str(info['forwardPE']) if info.get('forwardPE') else '',
+                week52_high=str(info['fiftyTwoWeekHigh']) if info.get('fiftyTwoWeekHigh') else '',
+                week52_low=str(info['fiftyTwoWeekLow']) if info.get('fiftyTwoWeekLow') else '',
+                beta=str(info.get('beta', '')),
+                ytd_change_pct='',
+                source='yfinance',
+            )
+            results[internal_key] = snap
+            if log:
+                log.info(f"  yfinance {sym:12s} → {cur_symbol}{price} PE={snap.pe_ratio}")
+        except Exception as e:
+            if log:
+                log.warning(f"  yfinance {sym:12s} 失败: {e}")
+
+    return results
+
+
+def sync_yfinance_to_json(symbols: list[str] | None = None, logger=None) -> int:
+    """从 yfinance 拉取实时数据，合并到 prices.json (保留已有 EBIT/ROIC 等字段)"""
+    log = logger
+    fresh = fetch_yfinance(symbols, logger=log)
+
+    existing = load_prices()
+    merged = {}
+    for ticker, old in existing.items():
+        merged[ticker] = old
+
+    count = 0
+    for ticker, snap in fresh.items():
+        if ticker in existing:
+            old = existing[ticker]
+            old.price = snap.price
+            old.market_cap = snap.market_cap
+            old.pe_ratio = snap.pe_ratio
+            old.forward_pe = snap.forward_pe
+            old.week52_high = snap.week52_high
+            old.week52_low = snap.week52_low
+            old.beta = snap.beta
+            old.currency = snap.currency
+            old.source = 'yfinance'
+            merged[ticker] = old
+        else:
+            merged[ticker] = snap
+        count += 1
+
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    data = {t: asdict(s) for t, s in merged.items()}
+    PRICES_JSON.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding='utf-8')
+    if log:
+        log.info(f"  yfinance 同步完成: {count} 家写入 {PRICES_JSON}")
+    return count
 
 
 def save_prices(snapshots: list[PriceSnapshot]) -> Path:

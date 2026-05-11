@@ -242,3 +242,87 @@ def compute_crypto_ranking(
         summary=summary,
         score_10=score_10,
     )
+
+
+def compute_pos_crypto_ranking(
+    ticker: str,
+    mcap_tvl_ratio: float,
+    staking_ratio: float,
+    f_score: int,
+    supply_inflation: float,
+    all_mcap_tvl: dict[str, float],
+    all_staking: dict[str, float],
+    all_f_score: dict[str, int],
+    all_inflation: dict[str, float],
+) -> RankingResult:
+    """PoS L1 加密四层排名 (ETH, SOL, BNB)
+
+    L1: Market Cap / TVL (越低越便宜)
+    L2: Staking 比率 (越高网络越安全)
+    L3: Crypto F-Score (0-6, 越高越健康)
+    L4: 年通胀率 (越低越好, 通缩>0%低通胀>高通胀)
+    """
+
+    def rank_lower(values: dict[str, float], t: str) -> str:
+        sorted_items = sorted(values.items(), key=lambda x: x[1] or float('inf'))
+        for i, (k, _) in enumerate(sorted_items, 1):
+            if k == t:
+                return f"#{i}/{len(sorted_items)}"
+        return f"#?/{len(sorted_items)}"
+
+    def rank_higher(values: dict[str, float], t: str) -> str:
+        sorted_items = sorted(values.items(), key=lambda x: x[1] or 0, reverse=True)
+        for i, (k, _) in enumerate(sorted_items, 1):
+            if k == t:
+                return f"#{i}/{len(sorted_items)}"
+        return f"#?/{len(sorted_items)}"
+
+    total = len(all_mcap_tvl)
+
+    l1_rank = rank_lower(all_mcap_tvl, ticker)
+    l2_rank = rank_higher(all_staking, ticker)
+    l3_rank = rank_higher({k: float(v) for k, v in all_f_score.items()}, ticker)
+    l4_rank = rank_lower(all_inflation, ticker)
+
+    l1r = int(l1_rank.split('/')[0].replace('#', ''))
+    l2r = int(l2_rank.split('/')[0].replace('#', ''))
+    l3r = int(l3_rank.split('/')[0].replace('#', ''))
+    l4r = int(l4_rank.split('/')[0].replace('#', ''))
+
+    composite_score = l1r * 0.40 + l2r * 0.25 + l3r * 0.25 + l4r * 0.10
+
+    rows = [
+        RankingRow(layer="L1", dimension="💰 便不便宜", metric="MCap/TVL",
+                   value=f"{mcap_tvl_ratio:.2f}", weight="40%", rank=l1_rank,
+                   verdict="估值偏低" if mcap_tvl_ratio < 3 else ("估值偏高" if mcap_tvl_ratio > 8 else "估值适中")),
+        RankingRow(layer="L2", dimension="🏭 网络强度", metric="Staking比率",
+                   value=f"{staking_ratio:.1f}%", weight="25%", rank=l2_rank,
+                   verdict="高度安全" if staking_ratio > 50 else "网络安全"),
+        RankingRow(layer="L3", dimension="🛡️ 链上健康", metric="Crypto F-Score",
+                   value=f"{f_score}/6", weight="25%", rank=l3_rank,
+                   verdict="链上健康" if f_score >= 4 else "链上有风险"),
+        RankingRow(layer="L4", dimension="📈 供给压力", metric="年通胀率",
+                   value=f"{supply_inflation:.1f}%", weight="10%", rank=l4_rank,
+                   verdict="通缩/低通胀" if supply_inflation < 2 else ("高通胀" if supply_inflation > 8 else "温和通胀")),
+    ]
+
+    summary = (
+        f"加权综合 = {l1r}×40% + {l2r}×25% "
+        f"+ {l3r}×25% + {l4r}×10% = {composite_score:.2f}"
+    )
+
+    max_possible = (
+        len(all_mcap_tvl) * 0.40 +
+        len(all_staking) * 0.25 +
+        len(all_f_score) * 0.25 +
+        len(all_inflation) * 0.10
+    )
+    score_10 = composite_to_score10(composite_score, max_possible)
+
+    return RankingResult(
+        rows=rows,
+        composite_score=composite_score,
+        composite_rank="",
+        summary=summary,
+        score_10=score_10,
+    )

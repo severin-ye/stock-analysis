@@ -98,7 +98,9 @@ def stage_render(state: PipelineState) -> PipelineState:
     logger.info(f"[Stage 3: render] 开始")
     report = StockReport(**state['report'])
     today = datetime.now().strftime('%y%m%d')
-    output_path = BASE_DIR / state['company_name'] / f'{today}_综合分析报告.html'
+    output_dir = Path(report.company_dir) if report.company_dir else (BASE_DIR / '分析输出' / state['company_name'])
+    output_dir.mkdir(parents=True, exist_ok=True)
+    output_path = output_dir / f'{today}_综合分析报告.html'
 
     logger.info(f"  输出: {output_path}")
     logger.info(f"  序列化大小: {len(str(state['report'])):,.0f} bytes")

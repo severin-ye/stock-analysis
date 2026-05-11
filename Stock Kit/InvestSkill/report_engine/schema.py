@@ -1,5 +1,5 @@
 """
-模块化报告 Schema — Greenblatt 排名法 v2.0
+ 模块化报告 Schema — Greenblatt 排名法 v3.0
 
 核心设计:
   - 模块清单固定，按 section 组织
@@ -329,7 +329,7 @@ class ModuleState(BaseModel):
 class StockReport(BaseModel):
     model_config = {"extra": "ignore"}
 
-    report_version: str = "2.0"
+    report_version: str = "3.0"
     ticker: str = ""
     company_name: str = ""
     company_name_en: str = ""
@@ -385,7 +385,7 @@ class StockReport(BaseModel):
     overrides: list[ModuleOverride] = []
     negotiation_result: Optional[NegotiationResult] = None
 
-    footer_text: str = "InvestSkill v2.0 · 教育性分析，不构成投资建议"
+    footer_text: str = "InvestSkill v3.0 · 教育性分析，不构成投资建议"
 
 
     def get_module_statuses(self) -> dict[str, ModuleStatus]:

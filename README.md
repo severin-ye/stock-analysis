@@ -66,8 +66,11 @@ python3 -m http.server 8888
 
 | 数据源 | 提供数据 |
 |--------|----------|
-| marketbeat.com | 股价、PE、市值、YTD 收益 |
-| trefis.com | 营收规模、增长驱动因素 |
+| Google Finance | 股价、PE、市值、52周高低、EPS、Beta |
+| stockanalysis.com | EBIT/EV、ROIC、Forward PEG |
+| marketbeat.com | F-Score 组件、YTD 收益、分析师目标价 |
+| CoinGecko API | 加密货币价格/市值 |
+| DeFiLlama API | 加密 TVL/Fees/Revenue
 
 ---
 

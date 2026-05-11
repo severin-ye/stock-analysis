@@ -11,7 +11,7 @@
 ```
 股市分析/
 ├── AGENTS.md              ← 本文件
-├── index.html             ← 导航首页（本地 localhost:8888）
+├── index.html             ← 排名总览页（自动生成，由 tools/index_generator.py 驱动）
 ├── Stock Kit/              ← 核心引擎（Skill + Tool 分离）
 │   ├── InvestSkill/        ← 方法论层（prompts、CSS、Jinja2 模板）
 │   │   ├── _template.html  ← HTML 报告 CSS 主模板
@@ -26,7 +26,8 @@
 │   │   └── pipeline.py     ← 编排器 (fetch→rank→LLM→render→validate)
 │   └── data/               ← 缓存数据
 │       └── prices.json     ← 8 家标的实时价格缓存 (LLM 用 webfetch 填充)
-├── 英伟达/ 苹果/ 特斯拉/ ... ← 报告输出目录
+├── 分析输出/               ← 所有公司分析报告
+│   └── 英伟达/ 苹果/ 特斯拉/ ... ← 报告输出目录
 └── .sisyphus/              ← 会话数据 + 日志
 ```
 
@@ -55,18 +56,33 @@ Skill (InvestSkill)         Tool (tools/)
 
 | 你说 | 出什么 |
 |---|---|
-| "综合分析"/"出报告" | 1 份 HTML |
-| "做研报"/"完整分析" | HTML + 3 MD |
+| "综合分析"/"出报告"/"生成研报" | 1 份 HTML |
+| "完整分析"/"出完整研报" | HTML + 3 MD |
 | "快速看下"/"估值" | 1 份 01_整体分析.md |
 | "收纳以往分析" | 归档旧分析到 `以往分析/` |
 | "重算排名" | 只跑 Greenblatt 三层排名 |
 
 ## 核心规则（每次分析必须遵守）
 
-### 数据采集（先搜后写）
-1. marketbeat.com → 股价、PE、市值、YTD
-2. trefis.com → 营收、增长驱动
-3. 交叉验证 → 至少2个源一致
+### 数据采集：Google Finance 优先（多市场统一）
+
+**第一层 — Google Finance（价格/PE/市值/52周高低）**：
+| 市场 | Google Finance URL | 能拿到 |
+|:---|:---|:---|
+| 美股 | `https://www.google.com/finance/quote/{SYMBOL}:NASDAQ` | 股价、PE、市值、52周、EPS、Beta、股息率 |
+| 港股 | `https://www.google.com/finance/quote/{CODE}:HKG` | 同上（HKD 计价） |
+| 日股 | `https://www.google.com/finance/quote/{CODE}:TYO` | 同上（JPY 计价） |
+| 韩股 | `https://www.google.com/finance/quote/{CODE}:KRX` | 同上（KRW 计价） |
+
+**第二层 — 专业源补充（Google 没有的）**：
+- EBIT/EV、ROIC、F-Score、PEG → stockanalysis.com + marketbeat.com（美股）/ HKEXnews解析（港股）/ EDINET XBRL（日股）/ DART XBRL（韩股）
+
+**第三层 — 加密专属（Google 不支持）**：
+- 价格/市值 → CoinGecko 免费 API
+- TVL/Fees/Revenue → DeFiLlama 免费 API
+- MVRV Z-Score → LLM webfetch 公开图表提取
+
+参见 `Stock Kit/tools/market_data.py` 解析器和 URL 模板。
 
 ### 输出格式
 - **百分比优先**：涨跌用 `+X%`/`-X%`，目标价辅助
@@ -83,6 +99,21 @@ print('OK' if passed else 'FAIL'); [print(f'  {i}') for i in issues]
 "
   ```
   验证失败 → 检查缺失 sections → 修复后重新验证。严禁交付未通过验证的 HTML 报告。
+
+### 多市场支持状态
+
+| 市场 | 价格源 | 财务源 | 排名适配 | 状态 |
+|:---|:---|:---|:---|:---:|
+| 美股 | Google Finance | stockanalysis + marketbeat | 标准四层 | ✅ |
+| 港股 | Google Finance (HKG) | HKEXnews 年报解析 | 标准四层 + HKD标注 | 🟡 数据源待完善 |
+| 日股 | Google Finance (TYO) | EDINET XBRL 解析 | 标准四层 + JPY标注 | 🔜 Phase 2 |
+| 韩股 | Google Finance (KRX) | DART XBRL 解析 | 标准四层 + KRW标注 | 🔜 Phase 2 |
+| 加密 BTC | CoinGecko + webfetch | 公开图表(LookIntoBitcoin) | MVRV+算力+F-Score+减半 | ✅ |
+| 加密 PoS | CoinGecko + DeFiLlama | 免费 API | MCap/TVL+Staking+CF-Score+通胀 | 🟡 数据源待采集 |
+
+**加密排名双轨**：
+- BTC：L1 MVRV Z-Score · L2 算力 · L3 链上 F-Score · L4 减半周期
+- ETH/SOL/BNB (PoS)：L1 MCap/TVL · L2 Staking比率 · L3 Crypto F-Score(0-6) · L4 年通胀率
 
 ### 批量分析执行策略（🚫 禁止并发派发）
 - **3+ 家公司同时分析时，必须逐家自行执行，禁止 `task(background=true)` 并发派发**
@@ -123,14 +154,28 @@ PYTHONPATH="Stock Kit:Stock Kit/InvestSkill" python3 -m tools.pipeline 英伟达
 # 运行分析 Pipeline (完整, 调用 LLM)
 PYTHONPATH="Stock Kit:Stock Kit/InvestSkill" python3 -m tools.pipeline 英伟达
 
+# 刷新价格数据 (yfinance 全市场, 无 AI 依赖)
+PYTHONPATH="Stock Kit:Stock Kit/InvestSkill" python3 -c "from tools.fetcher import sync_yfinance_to_json; sync_yfinance_to_json()"
+
+# 重新生成 index.html 排名总览（所有报告生成后必须执行）
+PYTHONPATH="Stock Kit:Stock Kit/InvestSkill" python3 -m tools.pipeline index
+
 # HTML 验证
 python3 -m tools.pipeline validate <报告路径>
 
 # Git
 cd /home/severin/Codelib/股市分析 && git push origin main
 
-# 运行 InvestSkill 测试
+# 运行 InvestSkill 测试 (Node.js, upstream)
 cd "Stock Kit/InvestSkill" && npm test
+
+# 运行 Python 验证 (本项目的核心测试)
+PYTHONPATH="Stock Kit:Stock Kit/InvestSkill" python3 -m tools.pipeline validate <报告路径>
+PYTHONPATH="Stock Kit:Stock Kit/InvestSkill" python3 -c "
+from report_engine.stages.validate import validate_html_file
+passed, issues = validate_html_file('<报告路径>')
+print('OK' if passed else 'FAIL'); [print(f'  {i}') for i in issues]
+"
 ```
 
 ## 评分体系（四层加权排名 v3.0）

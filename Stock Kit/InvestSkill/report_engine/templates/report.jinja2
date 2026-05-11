@@ -95,6 +95,9 @@ footer{text-align:center;padding:16px 0 32px;font-size:11px;color:var(--muted)}
 {# ── 侧边栏 ── #}
 <aside class="sidebar">
   <div class="sidebar-logo"><div class="ticker">{{ ticker }}</div><div class="name">{{ company_name }}</div></div>
+  {% if composite_rank_8 %}
+  <div class="sidebar-score"><div class="score-pill">🏆 <span class="num">{{ composite_rank_8 }}</span></div></div>
+  {% endif %}
   <nav>
     <div class="nav-gl">分析章节</div>
     {% for sid, label in SECTION_LABELS.items() %}
@@ -194,6 +197,30 @@ footer{text-align:center;padding:16px 0 32px;font-size:11px;color:var(--muted)}
       {% endfor %}
     </tbody>
   </table></div>
+  {% endif %}
+
+  {% if greenblatt_ranking %}
+  <h3>📊 四层加权排名 · {{ composite_rank_8 }}</h3>
+  <div class="t-wrap"><table>
+    <thead><tr><th>Layer</th><th>维度</th><th>主指标</th><th>数值</th><th>权重</th><th>排名</th><th>判断</th></tr></thead>
+    <tbody>
+      {% for row in greenblatt_ranking %}
+      <tr>
+        <td>{{ row.layer }}</td>
+        <td>{{ row.dimension }}</td>
+        <td>{{ row.metric }}</td>
+        <td>{{ row.value }}</td>
+        <td style="text-align:center">{{ row.weight }}</td>
+        <td style="text-align:center;font-weight:700">{{ row.rank }}</td>
+        <td>{{ row.verdict }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table></div>
+  {% endif %}
+
+  {% if ranking_summary %}
+  <div class="note">☝️ {{ ranking_summary }}</div>
   {% endif %}
 
   {% if s5_body_html %}{{ s5_body_html | safe }}{% endif %}
