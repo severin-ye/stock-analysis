@@ -4,7 +4,7 @@ import json
 from pathlib import Path
 from datetime import datetime
 from tools.fetcher import fetch_all_8
-from tools.ranker import compute_greenblatt, compute_crypto_ranking, compute_pos_crypto_ranking, composite_to_score10
+from tools.ranker import compute_greenblatt, compute_crypto_ranking, compute_pos_crypto_ranking, apply_cross_asset_scores
 
 BASE_DIR = Path('/home/severin/Codelib/股市分析')
 
@@ -15,7 +15,7 @@ NAME_MAP: dict[str, str] = {
     '000660.KS': 'SK海力士', '005930.KS': '三星电子',
     '207940.KS': '三星生物制药', '005380.KS': '现代汽车',
     '0700.HK': '腾讯', '9988.HK': '阿里巴巴', '3690.HK': '美团', '1211.HK': '比亚迪',
-    'BTC': '比特币', 'ETH': '以太坊', 'SOL': 'Solana', 'BNB': 'BNB',
+    'BTC': '比特币', 'ETH': '以太坊',
 }
 
 TICKER_INFO: dict[str, tuple[str, str]] = {
@@ -28,7 +28,6 @@ TICKER_INFO: dict[str, tuple[str, str]] = {
     '000660.KS': ('KRX', 'SK海力士'), '005930.KS': ('KRX', '三星电子'),
     '207940.KS': ('KRX', '三星生物制药'), '005380.KS': ('KRX', '现代汽车'),
     'BTC': ('Crypto', '比特币'), 'ETH': ('Crypto', '以太坊'),
-    'SOL': ('Crypto', 'Solana'), 'BNB': ('Crypto', 'BNB'),
 }
 
 REPORT_NAMES: dict[str, str] = {
@@ -50,9 +49,7 @@ REPORT_NAMES: dict[str, str] = {
     '美团': '分析输出/美团/260511_综合分析报告.html',
     '比亚迪': '分析输出/比亚迪/260511_综合分析报告.html',
     '比特币': '分析输出/比特币/260511_综合分析报告.html',
-    '以太坊': '分析输出/以太坊/260511_综合分析报告.html',
-    'Solana': '分析输出/Solana/260511_综合分析报告.html',
-    'BNB': '分析输出/BNB/260511_综合分析报告.html',
+    '以太坊': '分析输出/以太坊/260513_综合分析报告.html',
 }
 
 
@@ -64,7 +61,7 @@ def has_report_for_ticker(ticker: str) -> bool:
 MARKET_GROUP: dict[str, list[str]] = {
     '🇺🇸 美股': ['NVDA', 'AAPL', 'INTC', 'TSLA', 'AMD', 'MU'],
     '🇭🇰 港股': ['1810.HK', '0700.HK', '9988.HK', '3690.HK', '1211.HK'],
-    '₿ 加密': ['BTC', 'ETH', 'SOL', 'BNB'],
+    '₿ 加密': ['BTC', 'ETH'],
 }
 
 RANK_COLORS = {1: 'r1', 2: 'r2', 3: 'r3'}
@@ -138,18 +135,13 @@ def _card_html(name: str, ticker: str, exchange: str, rank_pos: int, total: int,
         f'<a class="rank-link" href="{report_rel}">',
         f'  <div class="rank-card {rc}{extra_class}">',
         f'    <div class="rank-top">',
-    ]
-    if is_crypto:
-        lines.append(f'      <div class="rank-pos" style="font-size:24px">₿</div>')
-    else:
-        lines.append(f'      <div class="rank-pos">#{rank_pos}<sup>/{total}</sup></div>')
-    lines += [
+        f'      <div class="rank-pos">#{rank_pos}<sup>/{total}</sup></div>',
         f'      <div class="ticker-name">{name} <small>{ticker} · {exchange}</small></div>',
         f'    </div>',
         f'    <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:4px">',
         f'      <div class="score-big" style="color:{score_color}">{score_10:.1f}</div>',
         f'    </div>',
-        f'    <div style="font-size:11px;color:var(--muted);margin-bottom:6px">十分制评分</div>',
+        f'    <div style="font-size:11px;color:var(--muted);margin-bottom:6px">统一十分制评分</div>',
         f'    <div class="metrics">',
     ]
     for label, value, pos in metrics:
@@ -166,13 +158,14 @@ def _build_stock_cards(sorted_stocks: list[tuple], total: int) -> list[str]:
         exchange = TICKER_INFO.get(ticker, ('', ''))[0]
         color = CHART_COLORS[(i - 1) % len(CHART_COLORS)]
         l1, l2, l3, l4 = rows[0], rows[1], rows[2], rows[3]
+        is_crypto = ticker in {'BTC', 'ETH', 'SOL', 'BNB'}
         metrics = [
             (l1.metric, l1.value, l1.rank),
             (l2.metric, l2.value, l2.rank),
-            ('F-Score', l3.value, l3.rank),
+            (l3.metric if is_crypto else 'F-Score', l3.value, l3.rank),
             (l4.metric, l4.value, l4.rank),
         ]
-        card = _card_html(name, ticker, exchange, i, total, s10, color, metrics)
+        card = _card_html(name, ticker, exchange, i, total, s10, color, metrics, is_crypto=is_crypto)
         if card:
             cards.append(card)
     return cards
@@ -200,7 +193,7 @@ def _build_market_section(label: str, tickers: list[str], all_rankings: list[tup
     market_items = [(t, c, r, s, rows) for t, c, r, s, rows in all_rankings if t in tickers]
     if not market_items:
         return ''
-    market_items.sort(key=lambda x: x[1])
+    market_items.sort(key=lambda x: (-x[3], x[0]))
 
     cards_html = []
     chart_labels = []
@@ -209,7 +202,7 @@ def _build_market_section(label: str, tickers: list[str], all_rankings: list[tup
     for i, (ticker, comp, rank, s10, rows) in enumerate(market_items, 1):
         name = NAME_MAP.get(ticker, ticker)
         exchange = TICKER_INFO.get(ticker, ('', ''))[0]
-        is_crypto = (ticker in ('BTC', 'ETH', 'SOL', 'BNB'))
+        is_crypto = (ticker in ('BTC', 'ETH'))
         color = CHART_COLORS[(i - 1) % len(CHART_COLORS)]
         if is_crypto:
             l1, l2, l3, l4 = rows[0], rows[1], rows[2], rows[3]
@@ -260,33 +253,54 @@ def generate() -> str:
     all_f_score = {t: p.f_score for t, p in prices.items() if p.f_score > 0}
     all_peg = {t: p.peg_num for t, p in prices.items() if p.peg_num is not None}
 
-    stock_tickers = [t for t in all_ebit_ev if t not in ('BTC', 'ETH', 'SOL', 'BNB')]
+    stock_tickers = [t for t in all_ebit_ev if t not in ('BTC', 'ETH')]
     stock_ebit_ev = {t: all_ebit_ev[t] for t in stock_tickers if t in all_ebit_ev}
     stock_roic = {t: all_roic[t] for t in stock_tickers if t in all_roic}
     stock_f = {t: all_f_score[t] for t in stock_tickers if t in all_f_score}
     stock_peg = {t: all_peg[t] for t in stock_tickers if t in all_peg}
 
-    stock_rankings = {}
+    rankings = {}
     for t in stock_ebit_ev:
+        if not has_report_for_ticker(t):
+            continue
         r = compute_greenblatt(t, stock_ebit_ev[t], stock_roic.get(t),
                                stock_f.get(t), stock_peg.get(t),
                                stock_ebit_ev, stock_roic, stock_f, stock_peg)
-        stock_rankings[t] = r
+        rankings[t] = r
+
+    # ── 加密排名 ──
+    btc = prices.get('BTC')
+    if btc and btc.mvrv_z_score > 0 and has_report_for_ticker('BTC'):
+        rankings['BTC'] = compute_crypto_ranking(
+            btc.mvrv_z_score, btc.hash_rate_eh, btc.f_score, btc.days_since_halving,
+            {'BTC': btc.mvrv_z_score}, {'BTC': btc.hash_rate_eh},
+            {'BTC': btc.f_score}, {'BTC': btc.days_since_halving},
+        )
+
+    pos_tickers = [t for t in ('ETH', 'SOL', 'BNB') if prices.get(t) and prices[t].mcap_tvl_ratio > 0]
+    all_mcap_tvl = {t: prices[t].mcap_tvl_ratio for t in pos_tickers}
+    all_staking = {t: prices[t].staking_ratio for t in pos_tickers}
+    all_crypto_f = {t: prices[t].f_score for t in pos_tickers}
+    all_inflation = {t: prices[t].supply_inflation for t in pos_tickers}
+    if 'ETH' in pos_tickers and has_report_for_ticker('ETH'):
+        eth = prices['ETH']
+        rankings['ETH'] = compute_pos_crypto_ranking(
+            'ETH',
+            eth.mcap_tvl_ratio, eth.staking_ratio,
+            eth.f_score, eth.supply_inflation,
+            all_mcap_tvl, all_staking, all_crypto_f, all_inflation,
+        )
+
+    apply_cross_asset_scores(prices, rankings)
 
     sorted_stocks = sorted(
-        [(t, r.composite_score, r.composite_rank, r.score_10, r.rows) for t, r in stock_rankings.items()],
-        key=lambda x: x[1]
+        [(t, r.composite_score, r.composite_rank, r.score_10, r.rows) for t, r in rankings.items()],
+        key=lambda x: (-x[3], x[0])
     )
-    sorted_stocks = [item for item in sorted_stocks if has_report_for_ticker(item[0])]
     stock_total = len(sorted_stocks)
 
     stock_cards = _build_stock_cards(sorted_stocks, stock_total)
     detail_rows = _build_detail_rows(sorted_stocks)
-
-    max_possible = (
-        len(all_ebit_ev) * 0.40 + len(all_roic) * 0.25 +
-        len(all_f_score) * 0.25 + len(all_peg) * 0.10
-    )
 
     chart_labels = json.dumps([NAME_MAP.get(t, t) for t, _, _, _, _ in sorted_stocks], ensure_ascii=False)
     chart_data = json.dumps([s10 for _, _, _, s10, _ in sorted_stocks])
@@ -295,81 +309,6 @@ def generate() -> str:
     per_market_sections = []
     all_rankings_for_market = sorted_stocks.copy()
 
-    # ── 加密排名 ──
-    btc = prices.get('BTC')
-    crypto_cards = []
-    if btc and btc.mvrv_z_score > 0:
-        pc = compute_crypto_ranking(
-            btc.mvrv_z_score, btc.hash_rate_eh, btc.f_score, btc.days_since_halving,
-            {'BTC': btc.mvrv_z_score}, {'BTC': btc.hash_rate_eh},
-            {'BTC': btc.f_score}, {'BTC': btc.days_since_halving},
-        )
-        all_rankings_for_market.append(('BTC', pc.composite_score, '', pc.score_10, pc.rows))
-
-        btc_metrics = [
-            (pc.rows[0].metric, pc.rows[0].value, pc.rows[0].rank),
-            (pc.rows[1].metric, pc.rows[1].value, pc.rows[1].rank),
-            (pc.rows[2].metric, pc.rows[2].value, pc.rows[2].rank),
-            (pc.rows[3].metric, pc.rows[3].value, pc.rows[3].rank),
-        ]
-        crypto_cards.append(
-            '<a class="rank-link" href="分析输出/比特币/260511_综合分析报告.html">\n'
-            '  <div class="rank-card crypto-card">\n'
-            '    <div class="rank-top">\n'
-            '      <div class="rank-pos" style="font-size:24px">₿</div>\n'
-            '      <div class="ticker-name">比特币 <small>BTC · Crypto</small></div>\n'
-            '    </div>\n'
-            '    <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:4px">\n'
-            f'      <div class="score-big" style="color:var(--amber)">{pc.score_10:.1f}</div>\n'
-            '    </div>\n'
-            f'    <div style="font-size:11px;color:var(--muted);margin-bottom:6px">BTC 十分制评分</div>\n'
-            '    <div class="metrics">\n'
-            + '\n'.join(
-                f'      <div class="m"><label>{l}</label><span>{v}</span><span class="pos">{p}</span></div>'
-                for l, v, p in btc_metrics
-            ) + '\n'
-            '    </div>\n'
-            '  </div></a>'
-        )
-
-    # ETH/SOL/BNB placeholder (no data yet)
-    for ticker, coin_name in [('ETH', '以太坊'), ('SOL', 'Solana'), ('BNB', 'BNB')]:
-        cp = prices.get(ticker)
-        if not cp:
-            crypto_cards.append(
-                f'<a class="rank-link" href="#">\n'
-                f'  <div class="rank-card crypto-card">\n'
-                f'    <div class="rank-top">\n'
-                f'      <div class="rank-pos" style="font-size:24px">⚡</div>\n'
-                f'      <div class="ticker-name">{coin_name} <small>{ticker} · Crypto</small></div>\n'
-                f'    </div>\n'
-                f'    <div style="display:flex;align-items:baseline;gap:8px">\n'
-                f'      <div class="score-big" style="color:var(--muted)">—</div>\n'
-                f'      <div class="score-label">待采集</div>\n'
-                f'    </div>\n'
-                f'    <div class="metrics">\n'
-                f'      <div class="m"><label>数据</label><span>待采集</span><span class="pos">—</span></div>\n'
-                f'      <div class="m"><label>数据</label><span>待采集</span><span class="pos">—</span></div>\n'
-                f'      <div class="m"><label>数据</label><span>待采集</span><span class="pos">—</span></div>\n'
-                f'      <div class="m"><label>数据</label><span>待采集</span><span class="pos">—</span></div>\n'
-                f'    </div>\n'
-                f'  </div></a>'
-            )
-        else:
-            # Skip PoS crypto with incomplete data - don't add to rankings
-            crypto_cards.append(
-                f'<a class="rank-link" href="#">\n'
-                f'  <div class="rank-card crypto-card">\n'
-                f'    <div class="rank-top">\n'
-                f'      <div class="rank-pos" style="font-size:24px">⚡</div>\n'
-                f'      <div class="ticker-name">{coin_name} <small>{ticker} · Crypto</small></div>\n'
-                f'    </div>\n'
-                f'    <div style="display:flex;align-items:baseline;gap:8px">\n'
-                f'      <div class="score-big" style="color:var(--muted)">—</div>\n'
-                f'      <div class="score-label">数据不完整</div>\n'
-                f'    </div>\n'
-                f'  </div></a>'
-            )
     for label, tickers in MARKET_GROUP.items():
         sec = _build_market_section(label, tickers, all_rankings_for_market)
         if sec:
@@ -392,15 +331,14 @@ def generate() -> str:
 
 <div class="leaderboard">
 {chr(10).join(stock_cards)}
-{chr(10).join(crypto_cards)}
 </div>
 
 <div class="card">
-  <div class="card-title">📊 四层加权排名明细 · 综合分 → 十分制</div>
+    <div class="card-title">📊 统一总榜明细 · 桶内综合分 + 跨资产十分制</div>
   <p style="font-size:12px;color:var(--slate);margin-bottom:16px">
-    综合分 = L1×40% + L2×25% + L3×25% + L4×10%（排名位置加权和，越小越好）<br>
-    十分制 = round(11 - 综合分 × 10 / {max_possible:.2f}, 1)（1-10，越大越好）<br>
-    加密标的用专属四层指标，不参与股票排名
+        桶内综合分 = 各资产在自身体系内的四层加权位置和，仅用于解释同体系内部相对位置（越小越好）<br>
+        统一十分制 = 将股票、BTC、PoS 加密各自的四层原始指标映射到统一语义标尺后加权，范围 1-10（越大越好）<br>
+        总榜按统一十分制从高到低排序；加密标的进入总榜，不再单独满分处理
   </p>
   <div class="t-wrap">
     <table>

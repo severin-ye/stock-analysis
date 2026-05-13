@@ -37,10 +37,12 @@ YF_TICKER_MAP: dict[str, str] = {
     '7203.T': '7203.T', '6758.T': '6758.T', '9984.T': '9984.T',
     '005930.KS': '005930.KS', '000660.KS': '000660.KS',
     '207940.KS': '207940.KS', '005380.KS': '005380.KS',
+    # 加密资产: Yahoo Finance 使用 XXX-USD 格式
+    'ETH-USD': 'ETH', 'BTC-USD': 'BTC', 'SOL-USD': 'SOL', 'BNB-USD': 'BNB',
 }
 
-# 哪些 ticker 走 yfinance
-YF_SYMBOLS = list(YF_TICKER_MAP.keys())
+# 哪些 ticker 走 yfinance (股票同步用，不含加密)
+YF_SYMBOLS = [k for k in YF_TICKER_MAP if k not in {'ETH-USD', 'BTC-USD', 'SOL-USD', 'BNB-USD'}]
 
 CRYPTO_ID_MAP: dict[str, str] = {
     'BTC': 'bitcoin',
@@ -556,7 +558,66 @@ def fetch_crypto_public(symbols: list[str] | None = None, logger=None) -> dict[s
         if log:
             log.info(f"  {ticker:4s} 年通胀率≈{val_str}% (协议参数估算: {desc})")
 
+    # ── Crypto F-Score (0-6): 基于已有采集指标计算 ──
+    for ticker in tickers:
+        if ticker not in results:
+            continue
+        snap = results[ticker]
+        snap.f_score = _compute_crypto_f_score(snap)
+        if log:
+            log.info(f"  {ticker:4s} Crypto F-Score={snap.f_score}/6")
+
     return results
+
+
+def _compute_crypto_f_score(snap: PriceSnapshot) -> int:
+    """基于已采集的公开指标计算 Crypto F-Score (0-6)
+
+    六项指标:
+      1. MCap/TVL < 8      → 估值合理 (防泡沫)
+      2. Staking > 20%      → 网络安全
+      3. 年通胀 < 5%         → 供给压力低
+      4. TVL > 1B           → 生态有深度
+      5. MCap > 10B         → 网络规模足够
+      6. MCap/TVL < 15      → 未严重高估 (冗余验证)
+    """
+    score = 0
+
+    # 1. MCap/TVL ratio (越低越健康)
+    if snap.mcap_tvl_ratio > 0 and snap.mcap_tvl_ratio < 8:
+        score += 1
+
+    # 2. Staking ratio (越高网络越安全)
+    if snap.staking_ratio > 20:
+        score += 1
+
+    # 3. Inflation rate (越低供给压力越小)
+    if snap.supply_inflation < 5:
+        score += 1
+
+    # 4. TVL (生态深度)
+    tvl_num = 0.0
+    if snap.tvl:
+        match = re.search(r'\$([\d.]+)B', snap.tvl)
+        if match:
+            tvl_num = float(match.group(1))
+    if tvl_num > 1:
+        score += 1
+
+    # 5. Market Cap (网络规模)
+    mcap_num = 0.0
+    if snap.market_cap:
+        match = re.search(r'\$([\d.]+)B', snap.market_cap)
+        if match:
+            mcap_num = float(match.group(1))
+    if mcap_num > 10:
+        score += 1
+
+    # 6. MCap/TVL not severely overvalued (冗余验证)
+    if snap.mcap_tvl_ratio > 0 and snap.mcap_tvl_ratio < 15:
+        score += 1
+
+    return score
 
 
 def sync_public_data_to_json(symbols: list[str] | None = None, logger=None) -> int:
@@ -568,7 +629,8 @@ def sync_public_data_to_json(symbols: list[str] | None = None, logger=None) -> i
     for ticker, snap in crypto.items():
         old = existing.get(ticker)
         if old:
-            for field in ('price', 'currency', 'market_cap', 'tvl', 'mcap_tvl_ratio', 'source'):
+            for field in ('price', 'currency', 'market_cap', 'tvl', 'mcap_tvl_ratio', 'source',
+                          'staking_ratio', 'supply_inflation', 'f_score'):
                 setattr(old, field, getattr(snap, field))
             existing[ticker] = old
         else:

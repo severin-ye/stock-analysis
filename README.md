@@ -6,6 +6,22 @@
 
 ---
 
+## 界面预览
+
+### 排名总览页
+
+![投资标的综合排名总览](assets/readme/ranking-overview.png)
+
+首页聚合展示全部标的的综合排名、分市场分组和横向对比图，适合先看谁在当前价格下更值得继续深挖。
+
+### 个股报告页
+
+![苹果综合分析报告示例](assets/readme/apple-report.png)
+
+单页报告采用 8 个结构化章节，集中呈现估值、过去一年走势、护城河、风险分析和最终投资信号。
+
+---
+
 ## 分析标的
 
 | 标的 | 代码 | 市场 | 状态 |
@@ -88,6 +104,8 @@ python3 -m http.server 8888
 ├── README.md                 ← 你正在读的文件
 ├── index.html                ← 导航首页（本地预览入口）
 ├── AGENTS.md                 ← AI Agent 内部知识库
+├── assets/
+│   └── readme/               ← README 截图资源
 ├── InvestSkill/              ← 分析框架核心（MIT License）
 │   ├── _template.html         ← HTML 报告 CSS 模板
 │   ├── prompts/               ← 20 个专业分析框架 prompt

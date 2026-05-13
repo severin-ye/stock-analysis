@@ -62,7 +62,7 @@ SCHEMA_HINT = """
     {"group":"效率","criterion":"ΔMargin > 0","score":0,"reason":""},
     {"group":"效率","criterion":"ΔTurnover > 0","score":0,"reason":""}
   ],
-  "f_score_total": 0,
+  "f_score_total": "0",
 
   "dashboard_metrics": [
     {"label":"营收增速","value":"从上表取","note":"YoY"},

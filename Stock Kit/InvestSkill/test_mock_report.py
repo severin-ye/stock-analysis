@@ -60,7 +60,7 @@ report.greenblatt_ranking = [
     RankingRow(layer='L3', dimension='🛡️ 会不会崩', metric='F-Score', value='8/9', rank='—', verdict='财务极其健康'),
 ]
 report.greenblatt_summary = 'Greenblatt: EBIT/EV 2.52% · ROIC 50%+ · F-Score 8/9 → 强力推荐'
-report.f_score_total = 8
+report.f_score_total = "8"
 report.f_score_items = [
     FScoreItem(group='盈利', criterion='ROA > 0', score=1, reason='TTM 净利润率 55.6%'),
     FScoreItem(group='盈利', criterion='CFO > 0', score=1, reason='FCF 利润率 44.8%'),

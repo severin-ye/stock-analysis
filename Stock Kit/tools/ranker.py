@@ -12,7 +12,11 @@
 from typing import TypedDict
 from dataclasses import dataclass, field
 
+from tools.fetcher import PriceSnapshot
+
 LAYER_WEIGHTS = {"L1": "40%", "L2": "25%", "L3": "25%", "L4": "10%"}
+NUMERIC_LAYER_WEIGHTS = {"L1": 0.40, "L2": 0.25, "L3": 0.25, "L4": 0.10}
+NEUTRAL_SCORE_10 = 5.5
 
 
 @dataclass
@@ -42,9 +46,119 @@ def composite_to_score10(composite: float, max_possible: float) -> float:
     max_possible: 各层最大排名×权重的加权和
     """
     if max_possible <= 1.0:
-        return 10.0
+        return NEUTRAL_SCORE_10
     raw = round(11.0 - composite * 10.0 / max_possible, 1)
     return max(1.0, min(10.0, raw))
+
+
+def _score_from_anchors(value: float | None, anchors: list[tuple[float, float]]) -> float:
+    if value is None:
+        return NEUTRAL_SCORE_10
+
+    ordered = sorted(anchors, key=lambda item: item[0])
+    if value <= ordered[0][0]:
+        return ordered[0][1]
+    if value >= ordered[-1][0]:
+        return ordered[-1][1]
+
+    for (x1, y1), (x2, y2) in zip(ordered, ordered[1:]):
+        if value <= x2:
+            if x2 == x1:
+                return y2
+            ratio = (value - x1) / (x2 - x1)
+            return round(y1 + (y2 - y1) * ratio, 1)
+
+    return ordered[-1][1]
+
+
+def _score_linear(value: int, max_value: int) -> float:
+    bounded = max(0, min(max_value, value))
+    return round(1.0 + 9.0 * bounded / max_value, 1)
+
+
+def _equity_layer_scores(info: PriceSnapshot) -> dict[str, float]:
+    return {
+        "L1": _score_from_anchors(info.ebit_ev_num, [
+            (0.0, 1.0), (0.5, 2.0), (1.5, 3.5), (3.0, 5.5), (5.0, 7.5), (8.0, 10.0),
+        ]),
+        "L2": _score_from_anchors(info.roic_num, [
+            (0.0, 1.0), (5.0, 3.0), (10.0, 5.0), (20.0, 7.5), (30.0, 9.0), (50.0, 10.0),
+        ]),
+        "L3": _score_linear(info.f_score, 9),
+        "L4": _score_from_anchors(info.peg_num, [
+            (0.0, 10.0), (0.5, 9.0), (1.0, 8.0), (2.0, 5.0), (3.0, 3.0), (4.0, 1.0),
+        ]),
+    }
+
+
+def _btc_layer_scores(info: PriceSnapshot) -> dict[str, float]:
+    return {
+        "L1": _score_from_anchors(info.mvrv_z_score, [
+            (0.0, 10.0), (0.5, 9.0), (1.0, 8.0), (2.0, 6.0), (3.0, 4.0), (5.0, 1.0),
+        ]),
+        "L2": _score_from_anchors(info.hash_rate_eh, [
+            (200.0, 2.0), (400.0, 4.0), (600.0, 6.0), (800.0, 8.0), (1000.0, 10.0),
+        ]),
+        "L3": _score_linear(info.f_score, 9),
+        "L4": _score_from_anchors(info.days_since_halving, [
+            (0.0, 10.0), (180.0, 9.0), (360.0, 8.0), (540.0, 6.5), (720.0, 5.0), (900.0, 3.5), (1200.0, 1.0),
+        ]),
+    }
+
+
+def _pos_crypto_layer_scores(info: PriceSnapshot) -> dict[str, float]:
+    return {
+        "L1": _score_from_anchors(info.mcap_tvl_ratio, [
+            (1.0, 10.0), (2.0, 9.0), (4.0, 7.5), (6.0, 6.0), (8.0, 5.0), (12.0, 3.0), (16.0, 1.0),
+        ]),
+        "L2": _score_from_anchors(info.staking_ratio, [
+            (10.0, 1.0), (20.0, 3.0), (35.0, 6.0), (50.0, 8.0), (70.0, 10.0),
+        ]),
+        "L3": _score_linear(info.f_score, 6),
+        "L4": _score_from_anchors(info.supply_inflation, [
+            (-2.0, 10.0), (0.0, 9.0), (1.0, 8.0), (3.0, 6.0), (6.0, 3.0), (10.0, 1.0),
+        ]),
+    }
+
+
+def build_cross_asset_layer_scores(info: PriceSnapshot) -> dict[str, float]:
+    if info.ticker == 'BTC':
+        return _btc_layer_scores(info)
+    if info.ticker in {'ETH', 'SOL', 'BNB'}:
+        return _pos_crypto_layer_scores(info)
+    return _equity_layer_scores(info)
+
+
+def score_snapshot_on_10(info: PriceSnapshot) -> float:
+    layer_scores = build_cross_asset_layer_scores(info)
+    score = sum(layer_scores[layer] * weight for layer, weight in NUMERIC_LAYER_WEIGHTS.items())
+    return round(max(1.0, min(10.0, score)), 1)
+
+
+def apply_cross_asset_scores(
+    prices: dict[str, PriceSnapshot],
+    rankings: dict[str, RankingResult],
+) -> dict[str, RankingResult]:
+    scored: list[tuple[str, float]] = []
+
+    for ticker, rank in rankings.items():
+        info = prices.get(ticker)
+        if not info:
+            continue
+        score_10 = score_snapshot_on_10(info)
+        rank.score_10 = score_10
+        base_summary = rank.summary.split(" | 统一十分制 ")[0]
+        rank.summary = f"{base_summary} | 统一十分制 {score_10:.1f}/10"
+        scored.append((ticker, score_10))
+
+    total = len(scored)
+    for i, (ticker, _) in enumerate(sorted(scored, key=lambda item: (-item[1], item[0])), 1):
+        rank = rankings[ticker]
+        rank.composite_rank = f"#{i}/{total}"
+        base_summary = rank.summary.split(" | 总榜 ")[0]
+        rank.summary = f"{base_summary} | 总榜 {rank.composite_rank}"
+
+    return rankings
 
 
 def compute_greenblatt(
@@ -67,14 +181,14 @@ def compute_greenblatt(
     """
 
     def rank_higher_better(values: dict[str, float], ticker: str, total: int) -> str:
-        sorted_items = sorted(values.items(), key=lambda x: x[1] or 0, reverse=True)
+        sorted_items = sorted(values.items(), key=lambda x: (-(x[1] or 0), x[0]))
         for i, (t, _) in enumerate(sorted_items, 1):
             if t == ticker:
                 return f"#{i}/{len(sorted_items)}"
         return f"#{len(sorted_items)+1}/{len(sorted_items)+1}"
 
     def rank_lower_better(values: dict[str, float], ticker: str, total: int) -> str:
-        sorted_items = sorted(values.items(), key=lambda x: x[1] or float('inf'))
+        sorted_items = sorted(values.items(), key=lambda x: (x[1] or float('inf'), x[0]))
         for i, (t, _) in enumerate(sorted_items, 1):
             if t == ticker:
                 return f"#{i}/{len(sorted_items)}"
@@ -113,7 +227,7 @@ def compute_greenblatt(
         l4r = int(l4r_str.split('/')[0].replace('#', '')) if '#' in l4r_str else total
         all_scores[t] = l1r * 0.40 + l2r * 0.25 + l3r * 0.25 + l4r * 0.10
 
-    ranked = sorted(all_scores.items(), key=lambda x: x[1])
+    ranked = sorted(all_scores.items(), key=lambda x: (x[1], x[0]))
     composite_rank = f"#?/{total}"
     for i, (t, _) in enumerate(ranked, 1):
         if t == ticker:
@@ -180,14 +294,14 @@ def compute_crypto_ranking(
     """
 
     def rank_lower(values: dict[str, float], ticker: str) -> str:
-        sorted_items = sorted(values.items(), key=lambda x: x[1] or float('inf'))
+        sorted_items = sorted(values.items(), key=lambda x: (x[1] or float('inf'), x[0]))
         for i, (t, _) in enumerate(sorted_items, 1):
             if t == ticker:
                 return f"#{i}/{len(sorted_items)}"
         return f"#?/{len(sorted_items)}"
 
     def rank_higher(values: dict[str, float], ticker: str) -> str:
-        sorted_items = sorted(values.items(), key=lambda x: x[1] or 0, reverse=True)
+        sorted_items = sorted(values.items(), key=lambda x: (-(x[1] or 0), x[0]))
         for i, (t, _) in enumerate(sorted_items, 1):
             if t == ticker:
                 return f"#{i}/{len(sorted_items)}"
@@ -270,14 +384,14 @@ def compute_pos_crypto_ranking(
     """
 
     def rank_lower(values: dict[str, float], t: str) -> str:
-        sorted_items = sorted(values.items(), key=lambda x: x[1] or float('inf'))
+        sorted_items = sorted(values.items(), key=lambda x: (x[1] or float('inf'), x[0]))
         for i, (k, _) in enumerate(sorted_items, 1):
             if k == t:
                 return f"#{i}/{len(sorted_items)}"
         return f"#?/{len(sorted_items)}"
 
     def rank_higher(values: dict[str, float], t: str) -> str:
-        sorted_items = sorted(values.items(), key=lambda x: x[1] or 0, reverse=True)
+        sorted_items = sorted(values.items(), key=lambda x: (-(x[1] or 0), x[0]))
         for i, (k, _) in enumerate(sorted_items, 1):
             if k == t:
                 return f"#{i}/{len(sorted_items)}"

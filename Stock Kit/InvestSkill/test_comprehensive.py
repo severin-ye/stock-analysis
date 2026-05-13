@@ -443,7 +443,7 @@ def test_render_integration(tmp_path):
             FScoreItem(group='效率', criterion='ΔMargin > 0', score=1, reason='毛利率升'),
             FScoreItem(group='效率', criterion='ΔTurnover > 0', score=0, reason='周转率降'),
         ],
-        f_score_total=8,
+        f_score_total="8",
         s5_body_html='<p>估值分析内容</p>',
         s5_valuation_methods=[
             ValuationMethod(name='DCF基准', value='$120', probability='50%'),

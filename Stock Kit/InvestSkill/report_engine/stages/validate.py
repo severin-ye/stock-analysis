@@ -166,20 +166,32 @@ def validate_data_sanity(html_path: str) -> list[str]:
                 issues.append(f'prices.json 找不到 ticker={ticker}，数据校验失败')
 
         if cache_record:
-            expected_values = [
-                ('Forward P/E', cache_record.get('forward_pe')),
-                ('PEG', cache_record.get('peg_ratio')),
-                ('EBIT/EV', cache_record.get('ebit_ev')),
-                ('ROIC', cache_record.get('roic')),
-                ('市值', cache_record.get('market_cap')),
-            ]
+            if ticker in {'ETH', 'SOL', 'BNB'}:
+                expected_values = [
+                    ('MCap/TVL', _format_decimal(cache_record.get('mcap_tvl_ratio'))),
+                    ('Staking', _format_percent(cache_record.get('staking_ratio'))),
+                    ('年通胀率', _format_percent(cache_record.get('supply_inflation'))),
+                    ('市值', cache_record.get('market_cap')),
+                ]
+            else:
+                expected_values = [
+                    ('Forward P/E', cache_record.get('forward_pe')),
+                    ('PEG', cache_record.get('peg_ratio')),
+                    ('EBIT/EV', cache_record.get('ebit_ev')),
+                    ('ROIC', cache_record.get('roic')),
+                    ('市值', cache_record.get('market_cap')),
+                ]
             for label, expected in expected_values:
                 if expected not in (None, '', 0) and str(expected) not in content:
                     issues.append(f'{label} 与 prices.json 不一致或未渲染: expected={expected}')
 
             expected_f_score = cache_record.get('f_score')
-            if expected_f_score not in (None, '') and f'{expected_f_score}/9' not in content:
-                issues.append(f'F-Score 与 prices.json 不一致或未渲染: expected={expected_f_score}/9')
+            if ticker in {'ETH', 'SOL', 'BNB'}:
+                expected_f_score_str = f'{expected_f_score}/6'
+            else:
+                expected_f_score_str = f'{expected_f_score}/9'
+            if expected_f_score not in (None, '') and expected_f_score_str not in content:
+                issues.append(f'F-Score 与 prices.json 不一致或未渲染: expected={expected_f_score_str}')
 
     pe_match = re.search(r'Forward P/E["\s:]+([\d.]+)', content)
     if pe_match and pe_match.group(1) in ('0', '0.0', '-0'):
@@ -233,3 +245,22 @@ def _find_record_in_cache(prices_data: dict, ticker: str) -> dict | None:
             if isinstance(r, dict) and r.get('ticker', '').upper() == ticker.upper():
                 return r
     return None
+
+
+def _format_decimal(value: float | int | str | None) -> str | None:
+    if value in (None, ''):
+        return None
+    try:
+        return f'{float(value):.2f}'.rstrip('0').rstrip('.')
+    except (TypeError, ValueError):
+        return str(value)
+
+
+def _format_percent(value: float | int | str | None) -> str | None:
+    if value in (None, ''):
+        return None
+    try:
+        return f'{float(value):.1f}%'
+    except (TypeError, ValueError):
+        text = str(value)
+        return text if text.endswith('%') else f'{text}%'

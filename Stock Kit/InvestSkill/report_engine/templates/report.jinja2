@@ -185,7 +185,11 @@ footer{text-align:center;padding:16px 0 32px;font-size:11px;color:var(--muted)}
   <div class="card-header"><div class="card-num">5</div><div class="card-title">💰 估值分析</div><div class="card-sub">DCF · 倍数</div></div>
 
   {% if f_score_items %}
+  {% if is_pos_crypto %}
+  <h3>🛡️ Crypto F-Score: {{ f_score_total }}/6</h3>
+  {% else %}
   <h3>🛡️ Piotroski F-Score: {{ f_score_total }}/9</h3>
+  {% endif %}
   <div class="t-wrap"><table>
     <thead><tr><th>组</th><th>指标</th><th>得分</th><th>说明</th></tr></thead>
     <tbody>
@@ -337,7 +341,7 @@ footer{text-align:center;padding:16px 0 32px;font-size:11px;color:var(--muted)}
       <div class="sr"><label>信号</label><span class="{% if s8_signal.signal == '看多' %}up{% elif s8_signal.signal == '看空' %}dn{% endif %}">{{ s8_signal.signal }}</span></div>
       <div class="sr"><label>信心度</label><span>{{ s8_signal.confidence }}</span></div>
       <div class="sr"><label>投资期限</label><span>{{ s8_signal.horizon }}</span></div>
-      <div class="sr"><label>评分</label><span>{{ f_score_total }} / 9</span></div>
+      <div class="sr"><label>评分</label><span>{{ f_score_total }} / {% if is_pos_crypto %}6{% else %}9{% endif %}</span></div>
     </div>
     <div class="signal-rows">
       <div class="sr"><label>建议操作</label><span>{{ s8_signal.action }}</span></div>
@@ -364,8 +368,8 @@ footer{text-align:center;padding:16px 0 32px;font-size:11px;color:var(--muted)}
       </div>
     </div>
     <div class="verdict-score">
-      <div class="big">{{ f_score_total }}/9</div>
-      <div class="lbl">Piotroski F-Score · 财务健康度</div>
+      <div class="big">{{ f_score_total }}/{% if is_pos_crypto %}6{% else %}9{% endif %}</div>
+      <div class="lbl">{% if is_pos_crypto %}Crypto F-Score · 链上健康度{% else %}Piotroski F-Score · 财务健康度{% endif %}</div>
       <div class="rec">{{ verdict.recommendation }}</div>
     </div>
   </div>

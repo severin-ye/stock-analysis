@@ -359,7 +359,7 @@ class StockReport(BaseModel):
     greenblatt_ranking: list[RankingRow] = []
     ranking_summary: str = ""
     f_score_items: list[FScoreItem] = []
-    f_score_total: int = 0
+    f_score_total: str = "0"
     composite_score: float = 0.0          # 加权综合分 (越小越好)
     composite_rank_8: str = ""            # "#3/8" 统一8家排名
     layer_weights: dict[str, str] = {"L1":"40%","L2":"25%","L3":"25%","L4":"10%"}

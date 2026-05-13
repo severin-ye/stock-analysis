@@ -29,7 +29,7 @@ from report_engine.stages.render import render_to_file
 
 from tools.fetcher import fetch_all_8, fetch_yfinance, fetch_crypto_public, PriceSnapshot, TICKER_MAP, YF_TICKER_MAP
 from tools.market_data import source_chain_summary
-from tools.ranker import compute_greenblatt, compute_crypto_ranking, compute_pos_crypto_ranking, RankingResult
+from tools.ranker import compute_greenblatt, compute_crypto_ranking, compute_pos_crypto_ranking, RankingResult, apply_cross_asset_scores
 
 BASE_DIR = Path('/home/severin/Codelib/股市分析')
 LOG_DIR = BASE_DIR / '.sisyphus' / 'pipeline_logs'
@@ -59,13 +59,19 @@ def build_logger(company_name: str) -> logging.Logger:
 
 TICKER_NAME_MAP = {
     'NVDA': '英伟达', 'AAPL': '苹果', 'INTC': '英特尔', 'TSLA': '特斯拉',
-    'AMD': 'AMD', 'MU': '美光', '1810.HK': '小米', 'BTC': '比特币',
+    'AMD': '超微半导体', 'MU': '美光', '1810.HK': '小米', 'BTC': '比特币',
     'LLY': '礼来', 'AVGO': '博通', '000660.KS': 'SK海力士',
     '005930.KS': '三星电子', '207940.KS': '三星生物制药', '005380.KS': '现代汽车',
     '0700.HK': '腾讯', '9988.HK': '阿里巴巴', '3690.HK': '美团', '1211.HK': '比亚迪',
     '7203.T': '丰田', '6758.T': '索尼', '9984.T': '软银集团',
     'ETH': '以太坊', 'SOL': 'Solana', 'BNB': 'BNB',
 }
+
+
+def has_report_for_ticker(ticker: str) -> bool:
+    company_name = TICKER_NAME_MAP.get(ticker, ticker)
+    report_dir = BASE_DIR / '分析输出' / company_name
+    return report_dir.is_dir() and any(report_dir.glob('*.html'))
 
 def build_real_data_prompt(company_name: str, ticker: str, prices: dict[str, PriceSnapshot],
                            rankings: dict[str, RankingResult]) -> str:
@@ -147,7 +153,45 @@ def build_real_data_prompt(company_name: str, ticker: str, prices: dict[str, Pri
         lines.append(f"""
 综合分: {rank.composite_score:.2f} (越小越好)
 综合排名: {rank.composite_rank}
+统一十分制: {rank.score_10:.1f}/10
 计算: {rank.summary}
+""")
+
+    # 安全阈值警告
+    if info and info.f_score is not None:
+        is_crypto = ticker in {'ETH', 'SOL', 'BNB', 'BTC'}
+        is_pos = ticker in {'ETH', 'SOL', 'BNB'}
+        f_score_label = "Crypto F-Score" if is_pos else ("链上改编 F-Score" if ticker == 'BTC' else "Piotroski F-Score")
+        max_score = 6 if is_pos else 9
+
+        if is_pos and info.f_score <= 1:
+            lines.append(f"""
+## ⛔ 安全阈值警报 (强制性)
+
+当前 {ticker} 的 {f_score_label} 为 {info.f_score}/{max_score}，属于**高危等级**（链上健康度严重不足）。
+
+**强制约束**:
+- s8_signal.signal 必须为 BEARISH 或 NEUTRAL（禁止 BULLISH）
+- s8_signal.action 必须为 SELL 或 HOLD（禁止 BUY）
+- s8_signal.conviction 必须为 WEAK
+- verdict.recommendation 必须为 "观望/回避" 或 "谨慎持有"
+- verdict.rec_class 必须为 "bear" 或 "neut"
+- verdict.f_score_total 写 "{info.f_score}/{max_score}"（字符串类型，如 "0/6"）
+- verdict.composite_rank 不要写入（排名与安全底线冲突时，安全优先）
+- 根级 f_score_total 字段必须写纯数字 {info.f_score}（字符串类型，如 "{info.f_score}"）
+""")
+        elif not is_crypto and info.f_score <= 3:
+            lines.append(f"""
+## ⛔ 安全阈值警报 (强制性)
+
+当前 {ticker} 的 Piotroski F-Score 为 {info.f_score}/9，属于**高危等级**（财务基本面持续恶化）。
+
+**强制约束**:
+- s8_signal.signal 必须为 BEARISH 或 NEUTRAL（禁止 BULLISH）
+- s8_signal.action 必须为 SELL 或 HOLD（禁止 BUY）
+- s8_signal.conviction 必须为 WEAK
+- verdict.recommendation 必须为 "观望/回避" 或 "谨慎持有"
+- verdict.rec_class 必须为 "bear" 或 "neut"
 """)
 
     # 全部 8 家排名汇总
@@ -155,18 +199,21 @@ def build_real_data_prompt(company_name: str, ticker: str, prices: dict[str, Pri
         lines.append("""
 ### 全部支持标的四层排名汇总 (纯数学, 禁止修改)
 
-| 标的 | L1(EBIT/EV) | L2(ROIC) | L3(F-Score) | L4(PEG) | 综合分 | 综合排名 |
-|------|------------|----------|-------------|---------|--------|----------|
+| 标的 | L1(EBIT/EV) | L2(ROIC) | L3(F-Score) | L4(PEG) | 综合分 | 统一十分制 | 综合排名 |
+|------|------------|----------|-------------|---------|--------|------------|----------|
 """)
-        sorted_ranks = sorted([(t, r.composite_score, r.composite_rank) for t, r in rankings.items()], key=lambda x: x[1])
-        for t, score, c_rank in sorted_ranks:
+        sorted_ranks = sorted(
+            [(t, r.composite_score, r.score_10, r.composite_rank) for t, r in rankings.items()],
+            key=lambda x: (-x[2], x[0])
+        )
+        for t, score, score_10, c_rank in sorted_ranks:
             nm = name_map.get(t, t)
             rows = rankings[t].rows
             l1 = f"{rows[0].value}({rows[0].rank})"
             l2 = f"{rows[1].value}({rows[1].rank})"
             l3 = f"{rows[2].value}({rows[2].rank})"
             l4 = f"{rows[3].value}({rows[3].rank})"
-            lines.append(f"| {nm} | {l1} | {l2} | {l3} | {l4} | {score:.2f} | {c_rank} |")
+            lines.append(f"| {nm} | {l1} | {l2} | {l3} | {l4} | {score:.2f} | {score_10:.1f}/10 | {c_rank} |")
 
     # 当前标的详细信息
     lines.append(f"""
@@ -206,6 +253,9 @@ def yfinance_symbol_for_ticker(ticker: str) -> str:
     return ticker
 
 
+CRYPTO_INTERNAL_TICKERS = {'BTC', 'ETH', 'SOL', 'BNB'}
+
+
 def fetch_price_history_points(ticker: str, current_price: float, logger: logging.Logger) -> tuple[list[str], list[float]]:
     try:
         import yfinance as yf
@@ -223,6 +273,21 @@ def fetch_price_history_points(ticker: str, current_price: float, logger: loggin
     if closes.empty:
         logger.warning(f"  {ticker}: yfinance Close 序列为空，跳过真实走势覆盖")
         return [], []
+
+    # 价格合理性校验: yfinance 返回的最近月价格必须与实际价格在同一量级
+    last_yf_price = float(closes.iloc[-1])
+    if current_price > 0 and last_yf_price > 0:
+        ratio = max(current_price, last_yf_price) / min(current_price, last_yf_price)
+        if ratio > 3:
+            logger.error(
+                f"  {ticker}: yfinance 价格校验失败！"
+                f" yfinance({yf_symbol}) 最近月=${last_yf_price:.2f}, "
+                f"真实当前价=${current_price:.2f}, 偏差{ratio:.1f}x > 3x 上限。"
+                f" 可能原因: Yahoo Finance 上 {yf_symbol} 不是预期的资产 "
+                f"(如 ETH 映射到 Ethan Allen Interiors 而非 Ethereum)。"
+                f" 跳过 yfinance 走势数据，使用 LLM 生成的概略图。"
+            )
+            return [], []
 
     labels = [idx.strftime('%y.%m') for idx in closes.index]
     data = [round(float(v), 2) for v in closes.values]
@@ -309,14 +374,28 @@ def apply_authoritative_report_data(report: StockReport, price_info: PriceSnapsh
     currency = price_info.currency or '$'
     report.cover_price = f"{currency}{price_info.price:,.2f}" if price_info.price else "—"
     report.cover_market_cap = price_info.market_cap or "—"
-    report.cover_kpi = [
-        KPIItem(label='当前股价', value=report.cover_price, css_class='up' if price_info.price else 'neut'),
-        KPIItem(label='YTD', value=price_info.ytd_change_pct or '—', css_class='up' if not str(price_info.ytd_change_pct).startswith('-') else 'dn'),
-        KPIItem(label='52周范围', value=f"{price_info.week52_low} - {price_info.week52_high}", sub='来自缓存'),
-        KPIItem(label='Forward P/E', value=price_info.forward_pe or '—'),
-        KPIItem(label='EBIT/EV', value=price_info.ebit_ev or '—'),
-        KPIItem(label='ROIC', value=price_info.roic or '—'),
-    ]
+
+    is_crypto = report.ticker in {'ETH', 'SOL', 'BNB', 'BTC'}
+    is_pos = report.ticker in {'ETH', 'SOL', 'BNB'}
+
+    if is_pos:
+        report.cover_kpi = [
+            KPIItem(label='当前价格', value=report.cover_price, css_class='up' if price_info.price else 'neut'),
+            KPIItem(label='MCap/TVL', value=f"{price_info.mcap_tvl_ratio:.2f}" if price_info.mcap_tvl_ratio else '—', css_class='up' if price_info.mcap_tvl_ratio and price_info.mcap_tvl_ratio < 8 else 'dn'),
+            KPIItem(label='TVL', value=price_info.tvl or '—', sub='DeFiLlama'),
+            KPIItem(label='Staking率', value=f"{price_info.staking_ratio}%" if price_info.staking_ratio else '—'),
+            KPIItem(label='年通胀率', value=f"{price_info.supply_inflation}%" if price_info.supply_inflation else '—'),
+            KPIItem(label='Crypto F-Score', value=f"{price_info.f_score}/6"),
+        ]
+    else:
+        report.cover_kpi = [
+            KPIItem(label='当前股价', value=report.cover_price, css_class='up' if price_info.price else 'neut'),
+            KPIItem(label='YTD', value=price_info.ytd_change_pct or '—', css_class='up' if not str(price_info.ytd_change_pct).startswith('-') else 'dn'),
+            KPIItem(label='52周范围', value=f"{price_info.week52_low} - {price_info.week52_high}", sub='来自缓存'),
+            KPIItem(label='Forward P/E', value=price_info.forward_pe or '—'),
+            KPIItem(label='EBIT/EV', value=price_info.ebit_ev or '—'),
+            KPIItem(label='ROIC', value=price_info.roic or '—'),
+        ]
 
     if rank:
         report.greenblatt_ranking = [
@@ -341,12 +420,42 @@ def apply_authoritative_report_data(report: StockReport, price_info: PriceSnapsh
             y_axis_label='', y_axis_format='', tooltip_prefix='', tooltip_suffix='',
         ))
 
-    report.f_score_total = int(price_info.f_score or 0)
-    report.s5_body_html = (
-        f"<p>估值区块展示缓存事实指标：Forward P/E {price_info.forward_pe or '—'}、"
-        f"PEG {price_info.peg_ratio or '—'}、EBIT/EV {price_info.ebit_ev or '—'}、ROIC {price_info.roic or '—'}。"
-        f"下方「模型分析」框为 LLM 生成的 DCF 情景假设；如有「真实数据参考」则来自外部数据源。</p>"
-    )
+    report.f_score_total = str(int(price_info.f_score or 0))
+
+    # 加密资产使用 Crypto F-Score (0-6)，显示标注
+    if is_pos:
+        report.s5_body_html = (
+            f"<p>估值区块展示缓存事实指标：Forward P/E —、"
+            f"PEG —、MCap/TVL {price_info.mcap_tvl_ratio}、Staking {price_info.staking_ratio}%。"
+            f"下方「Crypto F-Score」为基于公开链上指标的计算结果；如有「真实数据参考」则来自外部数据源。</p>"
+        )
+    else:
+        report.s5_body_html = (
+            f"<p>估值区块展示缓存事实指标：Forward P/E {price_info.forward_pe or '—'}、"
+            f"PEG {price_info.peg_ratio or '—'}、EBIT/EV {price_info.ebit_ev or '—'}、ROIC {price_info.roic or '—'}。"
+            f"下方「模型分析」框为 LLM 生成的 DCF 情景假设；如有「真实数据参考」则来自外部数据源。</p>"
+        )
+
+    # F-Score 安全阈值: 强制覆盖推荐
+    if is_pos and price_info.f_score <= 1:
+        if report.s8_signal:
+            report.s8_signal.action = 'HOLD'
+            if report.s8_signal.signal == 'BULLISH':
+                report.s8_signal.signal = 'NEUTRAL'
+            report.s8_signal.conviction = 'WEAK'
+        if report.verdict:
+            report.verdict.recommendation = '谨慎持有（Crypto F-Score 0-1/6，链上健康度不足）'
+            report.verdict.rec_class = 'neut'
+    elif not is_crypto and price_info.f_score <= 3:
+        if report.s8_signal:
+            report.s8_signal.action = 'HOLD'
+            if report.s8_signal.signal == 'BULLISH':
+                report.s8_signal.signal = 'NEUTRAL'
+            report.s8_signal.conviction = 'WEAK'
+        if report.verdict:
+            report.verdict.recommendation = '谨慎持有（F-Score ≤ 3/9，财务有风险）'
+            report.verdict.rec_class = 'neut'
+
     report.s6_body_html = (
         f"<p>未来展望包含 LLM 生成的悲观/基准/乐观三档情景假设（模型分析）；"
         f"如有分析师目标价等真实数据，将在下方「真实数据参考」中单独列出。</p>"
@@ -495,7 +604,7 @@ OUTPUT_SCHEMA = """
     {"group": "盈利", "criterion": "ROA > 0", "score": 0, "reason": "如果有数据支撑就填, 没有就标记不确定"},
     ...
   ],
-  "f_score_total": 0,
+   "f_score_total": "0",
 
   "dashboard_metrics": [
     {"label": "营收增速", "value": "从上表取", "note": "YoY"},
@@ -584,14 +693,43 @@ def run_llm_with_real_data(report: StockReport, real_data_prompt: str,
         temperature=0.1,
     )
 
-    prompt = f"""你是专业投资分析师。为 {report.company_name} ({report.ticker}, {report.company_name_en}) 生成完整 StockReport JSON。
+    is_crypto = report.asset_category == AssetCategory.CRYPTO
+    is_pos = report.ticker in {'ETH', 'SOL', 'BNB'}
+    is_btc = report.ticker == 'BTC'
 
-基本信息:
-- 交易所: {report.exchange}
-- 行业: {report.sector}
-- 资产类别: {report.asset_category.value}
-- 日期: 2026-05-11
+    # 加密资产排名体系说明
+    if is_pos:
+        ranking_system = """
+## PoS 加密四层加权排名体系
 
+| Layer | 指标 | 权重 | 说明 |
+|-------|------|:---:|------|
+| L1 | MCap/TVL | 40% | 便不便宜 (越低越好) |
+| L2 | Staking比率 | 25% | 网络安全性 (越高越好) |
+| L3 | Crypto F-Score (0-6) | 25% | 链上健康度 (越高越好) |
+| L4 | 年通胀率 | 10% | 供给压力 (越低越好) |
+
+综合分 = L1排名×0.40 + L2排名×0.25 + L3排名×0.25 + L4排名×0.10 | 越小越好
+
+⚠️ Crypto F-Score (0/6) 与 Piotroski F-Score (0/9) 是完全不同的体系。加密资产没有传统财报数据，f_score_items 全部填 score=0, reason="数据不足（加密资产无传统财报）"。verdict.f_score_total 写 Crypto F-Score 的值（字符串类型如 "X/6"）。根级 f_score_total 写纯数字字符串（如 "6"）。
+"""
+    elif is_btc:
+        ranking_system = """
+## BTC 加密四层加权排名体系
+
+| Layer | 指标 | 权重 | 说明 |
+|-------|------|:---:|------|
+| L1 | MVRV Z-Score | 40% | 便不便宜 (越低越便宜) |
+| L2 | Hash Rate (EH/s) | 25% | 网络安全性 (越高越强) |
+| L3 | 改编 F-Score (链上) | 25% | 链上健康度 (0-9) |
+| L4 | 距下次减半天数 | 10% | 周期位置 (越近越好) |
+
+综合分 = L1排名×0.40 + L2排名×0.25 + L3排名×0.25 + L4排名×0.10 | 越小越好
+
+⚠️ BTC 无传统财报，f_score_items 如无数据支撑则 score=0, reason="数据不足（BTC 无传统财报）"。
+"""
+    else:
+        ranking_system = """
 ## 四层加权排名体系
 
 | Layer | 指标 | 权重 | 说明 |
@@ -602,6 +740,17 @@ def run_llm_with_real_data(report: StockReport, real_data_prompt: str,
 | L4 | PEG | 10% | 增长值不值 |
 
 综合分 = L1排名×0.40 + L2排名×0.25 + L3排名×0.25 + L4排名×0.10 | 越小越好
+"""
+
+    prompt = f"""你是专业投资分析师。为 {report.company_name} ({report.ticker}, {report.company_name_en}) 生成完整 StockReport JSON。
+
+基本信息:
+- 交易所: {report.exchange}
+- 行业: {report.sector}
+- 资产类别: {report.asset_category.value}
+- 日期: 2026-05-11
+
+{ranking_system}
 
 {real_data_prompt}
 
@@ -617,7 +766,13 @@ def run_llm_with_real_data(report: StockReport, real_data_prompt: str,
 - 叙述字段（竞争格局、风险矩阵、展望等）基于真实数据分析，可以发挥判断力
 - **禁止在叙述中提及排名位置（如"排名第4/7"、"L1排名第1"等），排名已移至 index.html 统一展示**
 - F-Score 9 项逐条: 如果某条没有足够数据支撑, score 填 0, reason 写 "数据不足"
-- 图表数据: 基于上方真实数据构造合理的趋势/对比
+- 图表数据: 基于上方真实数据构造合理的趋势/对比"""
+    if is_pos:
+        prompt += """
+- **加密资产特殊规则**: f_score_total 写 Crypto F-Score (0-6) 数值，不是 Piotroski (0-9)
+- verdict.f_score_total 格式: "X/6 (Crypto F-Score)" 而不是 "X/9"
+- cover_kpi 的 EBIT/EV 改为 MCap/TVL, ROIC 改为 Staking率"""
+    prompt += """
 
 只返回 JSON，不要 markdown 代码块包裹。
 """
@@ -719,6 +874,8 @@ def run_analysis(company_name: str, dry_run: bool = False) -> Optional[str]:
         if p.peg_num is not None:
             all_peg[t] = p.peg_num
 
+    rankable_tickers = {t for t in prices if has_report_for_ticker(t)}
+    rankable_tickers.add(ticker)
     rankings = {}
     for t in prices:
         if t == 'BTC':
@@ -734,7 +891,8 @@ def run_analysis(company_name: str, dry_run: bool = False) -> Optional[str]:
                     btc.f_score, btc.days_since_halving,
                     all_mvrv, all_hash, all_btc_f, all_halving,
                 )
-                rankings[t] = result
+                if t in rankable_tickers:
+                    rankings[t] = result
                 logger.info(f"  BTC: composite={result.composite_score:.2f}")
         elif t in {'ETH', 'SOL', 'BNB'}:
             pos = prices.get(t)
@@ -754,7 +912,8 @@ def run_analysis(company_name: str, dry_run: bool = False) -> Optional[str]:
                     all_crypto_f,
                     all_inflation,
                 )
-                rankings[t] = result
+                if t in rankable_tickers:
+                    rankings[t] = result
                 logger.info(f"  {t}: composite={result.composite_score:.2f}")
         elif t in all_ebit_ev:
             result = compute_greenblatt(
@@ -765,9 +924,12 @@ def run_analysis(company_name: str, dry_run: bool = False) -> Optional[str]:
                 all_peg.get(t),
                 all_ebit_ev, all_roic, all_f_score, all_peg,
             )
-            rankings[t] = result
+            if t in rankable_tickers:
+                rankings[t] = result
             if t == ticker:
                 logger.info(f"  {t}: composite={result.composite_score:.2f}, rank={result.composite_rank}")
+
+    apply_cross_asset_scores(prices, rankings)
 
     if dry_run:
         logger.info("Dry run — 跳过 LLM 生成")

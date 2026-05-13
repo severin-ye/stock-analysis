@@ -57,6 +57,11 @@ def render(report: StockReport) -> str:
     ctx = report.model_dump(mode='json')
     ctx['SECTION_LABELS'] = section_labels
 
+    is_crypto = ctx.get('asset_category') in ('crypto',)
+    is_pos = ctx.get('ticker') in ('ETH', 'SOL', 'BNB')
+    ctx['is_crypto_asset'] = is_crypto
+    ctx['is_pos_crypto'] = is_pos
+
     # 信号中文化
     signal_val_map = {
         'BULLISH': '看多', 'BEARISH': '看空', 'NEUTRAL': '中性',
