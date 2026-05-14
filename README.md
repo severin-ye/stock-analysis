@@ -61,6 +61,16 @@ python3 -m http.server 8888
 
 打开浏览器访问：http://localhost:8888/index.html
 
+### 自动监听并重建首页
+
+```bash
+cd /home/severin/Codelib/股市分析
+source .venv/bin/activate
+PYTHONPATH="Stock Kit:Stock Kit/InvestSkill" python3 -m tools.pipeline watch
+```
+
+该命令会轮询监听 分析输出 下的 HTML 报告新增、修改、删除和重命名；一旦检测到变化，就自动重建 index.html。
+
 ### 数据来源
 
 所有数据均来自实时搜索，经至少两个来源交叉验证后方可使用：

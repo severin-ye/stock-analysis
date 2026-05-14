@@ -73,6 +73,71 @@ def has_report_for_ticker(ticker: str) -> bool:
     report_dir = BASE_DIR / '分析输出' / company_name
     return report_dir.is_dir() and any(report_dir.glob('*.html'))
 
+
+def snapshot_report_outputs(output_dir: Path) -> dict[str, int]:
+    if not output_dir.exists():
+        return {}
+
+    snapshot = {}
+    for html_path in sorted(output_dir.rglob('*.html')):
+        try:
+            snapshot[str(html_path.relative_to(output_dir))] = html_path.stat().st_mtime_ns
+        except OSError:
+            continue
+    return snapshot
+
+
+def watch_report_outputs(
+    output_dir: Optional[Path] = None,
+    poll_interval: float = 1.0,
+    debounce_seconds: float = 0.5,
+    max_polls: Optional[int] = None,
+    snapshot_fn=snapshot_report_outputs,
+    regenerate_fn=None,
+    sleep_fn=time.sleep,
+    logger: Optional[logging.Logger] = None,
+) -> None:
+    output_dir = output_dir or (BASE_DIR / '分析输出')
+    if regenerate_fn is None:
+        from tools.index_generator import regenerate as regenerate_fn
+
+    if logger:
+        logger.info(f'[watch] 开始监听: {output_dir}')
+
+    previous_snapshot = snapshot_fn(output_dir)
+    polls = 0
+
+    while max_polls is None or polls < max_polls:
+        sleep_fn(poll_interval)
+        current_snapshot = snapshot_fn(output_dir)
+        if current_snapshot == previous_snapshot:
+            polls += 1
+            continue
+
+        settled_snapshot = current_snapshot
+        if debounce_seconds > 0:
+            sleep_fn(debounce_seconds)
+            latest_snapshot = snapshot_fn(output_dir)
+            while latest_snapshot != settled_snapshot:
+                settled_snapshot = latest_snapshot
+                sleep_fn(debounce_seconds)
+                latest_snapshot = snapshot_fn(output_dir)
+
+        if logger:
+            logger.info('[watch] 检测到分析输出 HTML 变更，重建 index.html')
+
+        try:
+            regenerate_fn()
+        except Exception as e:
+            if logger:
+                logger.warning(f'[watch] index.html 重建失败: {e}')
+        else:
+            previous_snapshot = settled_snapshot
+            if logger:
+                logger.info('[watch] index.html 重建完成')
+
+        polls += 1
+
 def build_real_data_prompt(company_name: str, ticker: str, prices: dict[str, PriceSnapshot],
                            rankings: dict[str, RankingResult]) -> str:
     """构建完整真实数据注入块"""
@@ -958,6 +1023,13 @@ def run_analysis(company_name: str, dry_run: bool = False) -> Optional[str]:
     for i in issues:
         logger.info(f"  [{i}]")
 
+    try:
+        from tools.index_generator import regenerate
+        regenerate()
+        logger.info('[Stage 6: index] index.html 已根据分析输出重建')
+    except Exception as e:
+        logger.warning(f'[Stage 6: index] index.html 重建失败: {e}')
+
     total_elapsed = time.time() - t_total
     logger.info(f"{'='*60}")
     logger.info(f"总耗时: {total_elapsed:.1f}s")
@@ -972,11 +1044,19 @@ if __name__ == '__main__':
     if len(sys.argv) < 2:
         print('用法: python -m tools.pipeline <公司名> [--dry-run]')
         print('      python -m tools.pipeline index     # 再生index.html')
+        print('      python -m tools.pipeline watch     # 监听分析输出并自动重建index.html')
         print('      python -m tools.pipeline validate <报告路径>')
         sys.exit(1)
     if sys.argv[1] == 'index':
         from tools.index_generator import regenerate
         regenerate()
+        sys.exit(0)
+    if sys.argv[1] == 'watch':
+        logger = build_logger('watch-index')
+        try:
+            watch_report_outputs(logger=logger)
+        except KeyboardInterrupt:
+            logger.info('[watch] 已停止监听')
         sys.exit(0)
     if sys.argv[1] == 'validate':
         if len(sys.argv) < 3:
