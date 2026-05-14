@@ -65,7 +65,7 @@ def test_run_analysis_regenerates_index_after_report_write(monkeypatch, tmp_path
     fetcher = importlib.import_module('tools.fetcher')
     monkeypatch.setattr(fetcher, 'sync_public_data_to_json', lambda logger=None: None)
 
-    validate_module = importlib.import_module('InvestSkill.report_engine.stages.validate')
+    validate_module = importlib.import_module('tools.runtime.report_engine.stages.validate')
     monkeypatch.setattr(validate_module, 'validate', lambda report, html_path: (True, []))
 
     regenerate_calls = []

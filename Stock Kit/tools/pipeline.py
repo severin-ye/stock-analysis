@@ -18,14 +18,13 @@ from pathlib import Path
 from typing import Optional
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
-sys.path.insert(0, str(Path(__file__).parent.parent / 'InvestSkill'))
 
-from report_engine.schema import (
+from tools.runtime.report_engine.schema import (
     StockReport, ModuleStatus, AssetCategory, ChartType, ChartDef, ChartDataset,
     KPIItem, RankingRow, ValuationMethod, ScenarioRow,
 )
-from report_engine.stages.scaffold import scaffold
-from report_engine.stages.render import render_to_file
+from tools.runtime.report_engine.stages.scaffold import scaffold
+from tools.runtime.report_engine.stages.render import render_to_file
 
 from tools.fetcher import fetch_all_8, fetch_yfinance, fetch_crypto_public, PriceSnapshot, TICKER_MAP, YF_TICKER_MAP
 from tools.market_data import source_chain_summary
@@ -747,7 +746,7 @@ def run_llm_with_real_data(report: StockReport, real_data_prompt: str,
                            logger: logging.Logger) -> StockReport:
     """调用 LLM, 注入真实数据 — 无 SCHEMA_HINT 污染"""
     from langchain_openai import ChatOpenAI
-    from InvestSkill.report_engine.config import get_deepseek_config
+    from tools.runtime.report_engine.config import get_deepseek_config
 
     t0 = time.time()
     cfg = get_deepseek_config()
@@ -1017,7 +1016,7 @@ def run_analysis(company_name: str, dry_run: bool = False) -> Optional[str]:
 
     # Stage 5: Validate
     logger.info("[Stage 5: validate] HTML 完整性检查")
-    from InvestSkill.report_engine.stages.validate import validate
+    from tools.runtime.report_engine.stages.validate import validate
     passed, issues = validate(report, html_path)
     logger.info(f"  通过: {'是' if passed else '否'}")
     for i in issues:
@@ -1062,7 +1061,7 @@ if __name__ == '__main__':
         if len(sys.argv) < 3:
             print('用法: python -m tools.pipeline validate <报告路径>')
             sys.exit(1)
-        from report_engine.stages.validate import validate
+        from tools.runtime.report_engine.stages.validate import validate
         html_path = sys.argv[2]
         passed, issues = validate(None, html_path)
         print('✅ 通过' if passed else '❌ 未通过')

@@ -13,17 +13,18 @@
 ├── AGENTS.md              ← 本文件
 ├── index.html             ← 排名总览页（自动生成，由 tools/index_generator.py 驱动）
 ├── Stock Kit/              ← 核心引擎（Skill + Tool 分离）
-│   ├── InvestSkill/        ← 方法论层（prompts、CSS、Jinja2 模板）
+│   ├── InvestSkill/        ← 方法论层（prompts、模板、静态资源；不放 Python 脚本）
 │   │   ├── _template.html  ← HTML 报告 CSS 主模板
 │   │   ├── prompts/        ← 20个分析框架（stock-eval, dcf-valuation...）
-│   │   ├── templates/      ← Jinja2 报告模板 (report.jinja2)
-│   │   └── report_engine/  ← LangGraph 流水线 (schema/stages/pipeline)
-│   ├── tools/              ← 实现层（数据采集、排名、渲染、验证）
+│   │   └── templates/      ← Jinja2 报告模板 (report.jinja2)
+│   ├── tools/              ← 全部 Python 运行时代码与测试
 │   │   ├── fetcher.py      ← marketbeat/trefis 数据采集 + JSON 缓存
 │   │   ├── ranker.py       ← 纯数学四层加权排名 (无 LLM)
-│   │   ├── renderer.py     ← Jinja2 → HTML 渲染
-│   │   ├── validator.py    ← HTML 完整性验证
-│   │   └── pipeline.py     ← 编排器 (fetch→rank→LLM→render→validate)
+│   │   ├── index_generator.py ← index.html 生成器
+│   │   ├── pipeline.py     ← 主编排器 (fetch→rank→LLM→render→validate)
+│   │   ├── runtime/
+│   │   │   └── report_engine/ ← 内部运行时模块 (schema/stages/pipeline)
+│   │   └── tests/          ← 全部 Python 测试
 │   └── data/               ← 缓存数据
 │       └── prices.json     ← 8 家标的实时价格缓存 (LLM 用 webfetch 填充)
 ├── 分析输出/               ← 所有公司分析报告
@@ -37,8 +38,8 @@
 Skill (InvestSkill)         Tool (tools/)
 ├── 指定 marketbeat 数据源 → fetcher.py 按此抓取
 ├── 定义四层加权公式      → ranker.py 纯数学实现
-├── 提供 Jinja2 模板      → renderer.py 渲染用
-└── 指定 8-sections 格式  → validator.py 验证
+├── 提供 Jinja2 模板      → tools/runtime/report_engine/stages/render.py 渲染用
+└── 指定 8-sections 格式  → tools/runtime/report_engine/stages/validate.py 验证
 ```
 
 ### Pipeline 执行流程
@@ -101,8 +102,8 @@ Skill (InvestSkill)         Tool (tools/)
 - **HTML 报告**：8节（S1-S8+verdict），CSS 来自 `InvestSkill/_template.html`，评分区块替换为三层排名+F-Score卡
 - **HTML 验证（🚨 必须）**：每次生成/修改 HTML 报告后，**必须**运行验证：
   ```bash
-  PYTHONPATH="Stock Kit:Stock Kit/InvestSkill" python3 -c "
-from tools.validator import validate_html_file
+  PYTHONPATH="Stock Kit" python3 -c "
+from tools.runtime.report_engine.stages.validate import validate_html_file
 passed, issues = validate_html_file('<报告路径>')
 print('OK' if passed else 'FAIL'); [print(f'  {i}') for i in issues]
 "
@@ -160,16 +161,16 @@ cd /home/severin/Codelib/股市分析 && python3 -m http.server 8888
 # 访问 http://localhost:8888/index.html
 
 # 运行分析 Pipeline (dry-run 预览, 不调用 LLM)
-PYTHONPATH="Stock Kit:Stock Kit/InvestSkill" python3 -m tools.pipeline 英伟达 --dry-run
+PYTHONPATH="Stock Kit" python3 -m tools.pipeline 英伟达 --dry-run
 
 # 运行分析 Pipeline (完整, 调用 LLM)
-PYTHONPATH="Stock Kit:Stock Kit/InvestSkill" python3 -m tools.pipeline 英伟达
+PYTHONPATH="Stock Kit" python3 -m tools.pipeline 英伟达
 
 # 刷新公开数据 (yfinance 股票 + CoinGecko/DeFiLlama 加密基础数据, 无 AI 依赖)
-PYTHONPATH="Stock Kit:Stock Kit/InvestSkill" python3 -c "from tools.fetcher import sync_public_data_to_json; sync_public_data_to_json()"
+PYTHONPATH="Stock Kit" python3 -c "from tools.fetcher import sync_public_data_to_json; sync_public_data_to_json()"
 
 # 重新生成 index.html 排名总览（所有报告生成后必须执行）
-PYTHONPATH="Stock Kit:Stock Kit/InvestSkill" python3 -m tools.pipeline index
+PYTHONPATH="Stock Kit" python3 -m tools.pipeline index
 
 # HTML 验证
 python3 -m tools.pipeline validate <报告路径>
@@ -181,9 +182,9 @@ cd /home/severin/Codelib/股市分析 && git push origin main
 cd "Stock Kit/InvestSkill" && npm test
 
 # 运行 Python 验证 (本项目的核心测试)
-PYTHONPATH="Stock Kit:Stock Kit/InvestSkill" python3 -m tools.pipeline validate <报告路径>
-PYTHONPATH="Stock Kit:Stock Kit/InvestSkill" python3 -c "
-from report_engine.stages.validate import validate_html_file
+PYTHONPATH="Stock Kit" python3 -m tools.pipeline validate <报告路径>
+PYTHONPATH="Stock Kit" python3 -c "
+from tools.runtime.report_engine.stages.validate import validate_html_file
 passed, issues = validate_html_file('<报告路径>')
 print('OK' if passed else 'FAIL'); [print(f'  {i}') for i in issues]
 "

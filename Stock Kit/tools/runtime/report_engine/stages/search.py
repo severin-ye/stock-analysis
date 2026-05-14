@@ -1,8 +1,8 @@
 """Stage 1+2: 一站式生成 (搜索 + 分析合并) — 四层加权排名"""
 
 from langchain_openai import ChatOpenAI
-from report_engine.config import get_deepseek_config
-from report_engine.schema import StockReport, ModuleStatus
+from tools.runtime.report_engine.config import get_deepseek_config
+from tools.runtime.report_engine.schema import StockReport, ModuleStatus
 import json
 
 SCHEMA_HINT = """

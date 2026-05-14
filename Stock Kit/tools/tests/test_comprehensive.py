@@ -8,7 +8,7 @@ import json
 import os
 import re
 from pathlib import Path
-from report_engine.schema import StockReport
+from tools.runtime.report_engine.schema import StockReport
 
 BASE = Path('/home/severin/Codelib/股市分析')
 REPORT_DIRS = ['英伟达', '苹果', '特斯拉', '英特尔', 'AMD', '美光', '小米', '比特币']
@@ -242,7 +242,7 @@ def test_chart_count_matches(company):
 
 def test_schema_ranking_row():
     """验证 RankingRow 包含 4 层所有字段"""
-    from report_engine.schema import RankingRow
+    from tools.runtime.report_engine.schema import RankingRow
     row = RankingRow(layer='L4', dimension='📈 增长值不值', metric='PEG',
                      value='0.66x', weight='10%', rank='#2/8',
                      verdict='<1, 划算')
@@ -254,7 +254,7 @@ def test_schema_ranking_row():
 
 def test_schema_composite_fields():
     """验证 StockReport 包含 composite_score 和 composite_rank_8"""
-    from report_engine.schema import StockReport
+    from tools.runtime.report_engine.schema import StockReport
     r = StockReport(composite_score=1.85, composite_rank_8='#2/8',
                     ticker='TEST', company_name='测试', company_name_en='Test',
                     report_date='2026-05-11', data_date='测试')
@@ -264,7 +264,7 @@ def test_schema_composite_fields():
 
 def test_schema_layer_weights():
     """验证默认权重"""
-    from report_engine.schema import StockReport
+    from tools.runtime.report_engine.schema import StockReport
     r = StockReport(composite_score=0, composite_rank_8='', ticker='T', company_name='T',
                     company_name_en='T', report_date='', data_date='')
     assert r.layer_weights == {'L1': '40%', 'L2': '25%', 'L3': '25%', 'L4': '10%'}
@@ -272,7 +272,7 @@ def test_schema_layer_weights():
 
 def test_schema_fscore_validation():
     """F-Score items 必须有 9 条，每条的 score 是 0 或 1"""
-    from report_engine.schema import FScoreItem, StockReport
+    from tools.runtime.report_engine.schema import FScoreItem, StockReport
     
     items = [
         FScoreItem(group='盈利', criterion='ROA > 0', score=1, reason='...'),
@@ -294,7 +294,7 @@ def test_schema_fscore_validation():
 
 def test_schema_charts_required():
     """验证图表 ID 不重复"""
-    from report_engine.schema import ChartDef, ChartType
+    from tools.runtime.report_engine.schema import ChartDef, ChartType
     charts = [
         ChartDef(chart_id='priceChart', chart_type=ChartType.LINE, section_id='s3',
                  labels=['a', 'b'], datasets=[]),
@@ -316,7 +316,7 @@ def test_schema_charts_required():
 # ═══════════════════════════════════════
 
 def test_model_dump_json_converts_enums_to_strings():
-    from report_engine.schema import (
+    from tools.runtime.report_engine.schema import (
         StockReport, ChartDef, ChartType, SignalBlock,
     )
 
@@ -353,7 +353,7 @@ def test_model_dump_json_converts_enums_to_strings():
 
 
 def test_model_dump_python_mode_keeps_enums():
-    from report_engine.schema import ChartDef, ChartType
+    from tools.runtime.report_engine.schema import ChartDef, ChartType
     chart = ChartDef(chart_id='c', chart_type=ChartType.LINE, section_id='s3',
                      labels=[], datasets=[])
     d = chart.model_dump()
@@ -363,14 +363,14 @@ def test_model_dump_python_mode_keeps_enums():
 
 
 def test_chart_type_enum_values():
-    from report_engine.schema import ChartType
+    from tools.runtime.report_engine.schema import ChartType
     assert ChartType.LINE == 'line'
     assert ChartType.BAR == 'bar'
     assert ChartType.RADAR == 'radar'
 
 
 def test_signal_enum_values():
-    from report_engine.schema import (
+    from tools.runtime.report_engine.schema import (
         SignalType, ConfidenceType, HorizonType,
         ActionType, ConvictionType,
     )
@@ -389,13 +389,13 @@ def test_signal_enum_values():
 
 def test_render_integration(tmp_path):
     """用 mock 数据渲染 HTML 并验证关键元素"""
-    from report_engine.schema import (
+    from tools.runtime.report_engine.schema import (
         StockReport, KPIItem, PriceChangeRow, CompanyOverview,
         KeyMetricRow, CompetitonSection, RankingRow, FScoreItem,
         ValuationMethod, ScenarioRow, RiskItem, SignalBlock,
         VerdictSection, ChartDef, ChartType, ChartDataset,
     )
-    from report_engine.stages.render import render
+    from tools.runtime.report_engine.stages.render import render
 
     report = StockReport(
         ticker='TEST', company_name='测试公司', company_name_en='Test Corp',

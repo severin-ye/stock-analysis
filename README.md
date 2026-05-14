@@ -66,7 +66,7 @@ python3 -m http.server 8888
 ```bash
 cd /home/severin/Codelib/股市分析
 source .venv/bin/activate
-PYTHONPATH="Stock Kit:Stock Kit/InvestSkill" python3 -m tools.pipeline watch
+PYTHONPATH="Stock Kit" python3 -m tools.pipeline watch
 ```
 
 该命令会轮询监听 分析输出 下的 HTML 报告新增、修改、删除和重命名；一旦检测到变化，就自动重建 index.html。
@@ -101,21 +101,14 @@ PYTHONPATH="Stock Kit:Stock Kit/InvestSkill" python3 -m tools.pipeline watch
 ├── AGENTS.md                 ← AI Agent 内部知识库
 ├── assets/
 │   └── readme/               ← README 截图资源
-├── InvestSkill/              ← 分析框架核心（MIT License）
-│   ├── _template.html         ← HTML 报告 CSS 模板
-│   ├── prompts/               ← 20 个专业分析框架 prompt
-│   ├── CLAUDE.md              ← InvestSkill 自身文档
-│   └── output/                ← 示例报告
-├── 英伟达/                    ← NVDA 分析报告
-│   ├── 260511_综合分析报告.html
-│   └── 以往分析/              ← 历史分析归档
-├── 苹果/                     ← AAPL 分析报告
-├── 特斯拉/                   ← TSLA 分析报告
-├── 英特尔/                   ← INTC 分析报告
-├── AMD/                      ← AMD 分析报告
-├── 美光/                     ← MU 分析报告
-├── 小米/                     ← 1810.HK 分析报告
-├── 比特币/                   ← BTC 分析报告
+├── Stock Kit/
+│   ├── InvestSkill/          ← 分析框架核心（只保留 prompt、模板、文档等静态资产）
+│   └── tools/                ← 全部 Python 运行时代码与测试
+│       ├── pipeline.py
+│       ├── runtime/
+│       │   └── report_engine/
+│       └── tests/
+├── 分析输出/                 ← 所有公司与资产的 HTML 报告
 └── .sisyphus/                ← 会话数据（自动生成）
 ```
 

@@ -6,7 +6,7 @@
 
 from pathlib import Path
 from datetime import datetime
-from report_engine.schema import (
+from tools.runtime.report_engine.schema import (
     StockReport, ModuleState, ModuleStatus, ModuleDef,
     AssetCategory, ALL_MODULES
 )

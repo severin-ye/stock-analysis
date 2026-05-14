@@ -1,7 +1,7 @@
 """
 LangGraph 编排 — 带详细日志
 用法:
-  python -m report_engine.pipeline 小米
+    python -m tools.runtime.report_engine.pipeline 小米
 """
 
 import sys
@@ -13,11 +13,11 @@ from datetime import datetime
 
 from langgraph.graph import StateGraph, END
 
-from report_engine.schema import StockReport
-from report_engine.stages.scaffold import scaffold
-from report_engine.stages.search import run_search
-from report_engine.stages.render import render_to_file
-from report_engine.stages.validate import validate
+from tools.runtime.report_engine.schema import StockReport
+from tools.runtime.report_engine.stages.scaffold import scaffold
+from tools.runtime.report_engine.stages.search import run_search
+from tools.runtime.report_engine.stages.render import render_to_file
+from tools.runtime.report_engine.stages.validate import validate
 
 BASE_DIR = Path('/home/severin/Codelib/股市分析')
 LOG_DIR = BASE_DIR / '.sisyphus' / 'pipeline_logs'
@@ -182,6 +182,6 @@ def run(company_name: str):
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:
-        print('用法: python -m report_engine.pipeline <公司名>')
+        print('用法: python -m tools.runtime.report_engine.pipeline <公司名>')
         sys.exit(1)
     run(sys.argv[1])

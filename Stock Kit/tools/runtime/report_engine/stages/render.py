@@ -6,7 +6,7 @@
 
 from pathlib import Path
 from jinja2 import Environment, FileSystemLoader
-from report_engine.schema import StockReport, ChartType
+from tools.runtime.report_engine.schema import StockReport, ChartType
 import json
 import logging
 import time

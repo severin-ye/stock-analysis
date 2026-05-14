@@ -1,13 +1,15 @@
 """快速测试 report_engine"""
-import sys
-sys.path.insert(0, '/home/severin/Codelib/股市分析/InvestSkill')
 
-from report_engine.stages.scaffold import scaffold
-from report_engine.stages.render import render
-from report_engine.stages.validate import validate_schema
-from report_engine.schema import ChartDef, ChartDataset, ChartType
+import pytest
 
-def test_scaffold():
+from tools.runtime.report_engine.stages.scaffold import scaffold
+from tools.runtime.report_engine.stages.render import render
+from tools.runtime.report_engine.stages.validate import validate_schema
+from tools.runtime.report_engine.schema import ChartDef, ChartDataset, ChartType
+
+
+@pytest.fixture
+def report():
     report = scaffold('英伟达')
     assert report.ticker == 'NVDA'
     assert report.company_name == '英伟达'
@@ -17,6 +19,10 @@ def test_scaffold():
     print(f'  scaffold: {report.ticker} | 模块: {n_modules} | 缺失: {len(missing)}')
     assert n_modules > 15, f'Expected >15 modules, got {n_modules}'
     return report
+
+
+def test_scaffold(report):
+    assert report.ticker == 'NVDA'
 
 def test_render(report):
     report.charts = [
@@ -45,7 +51,6 @@ def test_render(report):
     assert has_canvas
     assert has_chart
     assert has_section
-    return html
 
 def test_validate(report):
     issues = validate_schema(report)
@@ -61,9 +66,9 @@ def test_btc():
 
 if __name__ == '__main__':
     print('Stage 0: Scaffold')
-    r = test_scaffold()
+    r = report()
     print('\nStage 3: Render')
-    html = test_render(r)
+    test_render(r)
     print('\nStage 4: Validate')
     test_validate(r)
     print('\nBTC test')

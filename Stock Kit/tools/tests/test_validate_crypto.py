@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from report_engine.stages.validate import validate
+from tools.runtime.report_engine.stages.validate import validate
 
 
 BASE_DIR = Path('/home/severin/Codelib/股市分析')

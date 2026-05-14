@@ -7,7 +7,7 @@
 from pathlib import Path
 import json
 import re
-from report_engine.schema import StockReport
+from tools.runtime.report_engine.schema import StockReport
 
 
 def validate_schema(report: StockReport) -> list[str]:
@@ -109,9 +109,8 @@ def validate_data_sanity(html_path: str) -> list[str]:
 
     content = html.read_text(encoding='utf-8')
 
-    prices_path = html.parent.parent.parent.parent / 'Stock Kit' / 'data' / 'prices.json'
-    if not prices_path.exists():
-        prices_path = Path(__file__).parent.parent.parent.parent / 'data' / 'prices.json'
+    stock_kit_dir = Path(__file__).resolve().parents[4]
+    prices_path = stock_kit_dir / 'data' / 'prices.json'
     if not prices_path.exists():
         return ['prices.json 未找到，无法交叉验证数据']
 
