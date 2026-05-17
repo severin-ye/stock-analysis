@@ -37,6 +37,9 @@ dev = [
     "mypy>=1.14",
 ]
 
+[project.scripts]
+stock-analysis = "stock_analysis.cli:main"
+
 [project.urls]
 Homepage = "https://github.com/severin/stock-analysis"
 Repository = "https://github.com/severin/stock-analysis"

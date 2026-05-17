@@ -1074,12 +1074,13 @@ def run_analysis(company_name: str, dry_run: bool = False, use_opencode_llm: boo
     return html_path
 
 
-if __name__ == '__main__':
+def main():
+    """命令行入口"""
     if len(sys.argv) < 2:
-        print('用法: python -m tools.pipeline <公司名> [--dry-run] [--use-opencode-llm]')
-        print('      python -m tools.pipeline index     # 再生index.html')
-        print('      python -m tools.pipeline watch     # 监听分析输出并自动重建index.html')
-        print('      python -m tools.pipeline validate <报告路径>')
+        print('用法: stock-analysis <公司名> [--dry-run] [--use-opencode-llm]')
+        print('      stock-analysis index     # 再生index.html')
+        print('      stock-analysis watch     # 监听分析输出并自动重建index.html')
+        print('      stock-analysis validate <报告路径>')
         print('')
         print('选项:')
         print('  --dry-run             不调用 LLM，仅验证数据流')
@@ -1098,7 +1099,7 @@ if __name__ == '__main__':
         sys.exit(0)
     if sys.argv[1] == 'validate':
         if len(sys.argv) < 3:
-            print('用法: python -m tools.pipeline validate <报告路径>')
+            print('用法: stock-analysis validate <报告路径>')
             sys.exit(1)
         from stock_analysis.reports.stages.validate import validate
         html_path = sys.argv[2]
@@ -1111,3 +1112,7 @@ if __name__ == '__main__':
     dry = '--dry-run' in sys.argv
     use_opencode = '--use-opencode-llm' in sys.argv
     run_analysis(company, dry_run=dry, use_opencode_llm=use_opencode)
+
+
+if __name__ == '__main__':
+    main()

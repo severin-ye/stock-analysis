@@ -198,21 +198,24 @@ PYTHONPATH="src" python3 -m tools.pipeline watch
 ## 目录结构
 
 ```
-股市分析/
+stock-analysis/
 ├── README.md                 ← 你正在读的文件
-├── index.html                ← 导航首页（本地预览入口）
-├── AGENTS.md                 ← AI Agent 内部知识库
-├── assets/
-│   └── readme/               ← README 截图资源
 ├── src/
-│   ├── InvestSkill/          ← 分析框架核心（只保留 prompt、模板、文档等静态资产）
-│   └── tools/                ← 全部 Python 运行时代码与测试
-│       ├── pipeline.py
-│       ├── runtime/
-│       │   └── report_engine/
-│       └── tests/
-├── 分析输出/                 ← 所有公司与资产的 HTML 报告
-└── .sisyphus/                ← 会话数据（自动生成）
+│   ├── stock_analysis/       ← Python 核心包
+│   │   ├── cli.py            ← 命令行入口
+│   │   ├── data/             ← 数据采集 (fetcher, sources)
+│   │   ├── ranking/          ← 排名引擎 (greenblatt)
+│   │   ├── reports/          ← 报告生成 (schema, stages, templates)
+│   │   ├── registry.py       ← 公司注册表
+│   │   ├── generator.py      ← index.html 生成器
+│   │   └── llm_client.py     ← LLM 客户端
+│   └── investskill/          ← InvestSkill 框架 (prompts, templates)
+├── tests/                    ← 测试
+├── data/                     ← 公司数据 (companies.json)
+├── output/                   ← 生成报告
+├── docs/                     ← 文档
+├── assets/                   ← 静态资源
+└── .opencode/                ← Agent 知识库
 ```
 
 ---
