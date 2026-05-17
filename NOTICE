@@ -1,0 +1,33 @@
+Stock Analysis (股市分析)
+Copyright (c) 2026 severin
+
+This project includes software developed by third parties:
+
+1. InvestSkill v1.6.0
+   Copyright (c) 2026 yennanliu
+   MIT License — see stock_kit/InvestSkill/LICENSE
+
+2. yfinance
+   Copyright (c) 2024 Ran Aroussi
+   MIT License
+
+3. Jinja2
+   Copyright (c) 2024 Pallets Team
+   BSD-3-Clause License
+
+4. Pydantic
+   Copyright (c) 2024 Samuel Colvin
+   BSD-3-Clause License
+
+5. LangChain / LangGraph
+   Copyright (c) 2024 LangChain, Inc.
+   MIT License
+
+6. OpenAI Python SDK
+   Copyright (c) 2024 OpenAI
+   MIT License
+
+Third-party licenses are available in their respective package distributions.
+
+For the full text of all third-party licenses, please refer to the license
+files included with each dependency.

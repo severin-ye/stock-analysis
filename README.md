@@ -146,6 +146,14 @@ HTML 报告包含 8 个结构化章节（S1-S8），最终输出投资建议（V
 
 ---
 
+## License
+
+MIT License — see [LICENSE](LICENSE).
+
+Based on InvestSkill v1.6.0 (MIT License, yennanliu) — see [stock_kit/InvestSkill/LICENSE](stock_kit/InvestSkill/LICENSE).
+
+---
+
 ## 注意事项
 
 ⚠️ **免责声明** — 本分析报告仅供参考，不构成任何投资建议。所有数据基于公开信息和模型分析，存在时效性和误差可能。投资有风险，决策需谨慎。
