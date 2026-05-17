@@ -21,9 +21,14 @@ cd 股市分析
 pip install -r requirements.txt
 ```
 
-### 3. 配置 LLM API
+### 3. 配置 LLM API (如使用 OpenCode 可跳过)
 
-复制环境变量模板并填写你的 API 密钥：
+本项目默认复用 OpenCode 的 LLM 配置。如果你已通过 OpenCode 配置了 LLM，**无需额外操作**。
+
+仅在以下情况需要手动配置：
+- 不使用 OpenCode，直接命令行运行
+- CI/CD 环境
+- 需要覆盖 OpenCode 的模型选择
 
 ```bash
 cp .env.example .env
@@ -46,6 +51,35 @@ PYTHONPATH="stock_kit" python3 -m tools.pipeline 英伟达
 cd 股市分析 && python3 -m http.server 8888
 # 访问 http://localhost:8888/index.html
 ```
+
+---
+
+## 为什么需要独立的 LLM 配置？
+
+本项目采用**双层架构**设计：
+
+```
+┌─────────────────────────────────────────────┐
+│  第一层: OpenCode Agent (推理决策层)          │
+│  · 决定分析哪家公司                           │
+│  · 调用 pipeline.py --dry-run (纯数据)       │
+│  · 检查报告完整性                             │
+└─────────────────────────────────────────────┘
+                        ↓ 注入真实数据
+┌─────────────────────────────────────────────┐
+│  第二层: 项目 Pipeline (报告生成层)           │
+│  · fetch: yfinance 抓真实价格                 │
+│  · rank: 纯数学计算排名 (无 LLM)             │
+│  · LLM: 仅润色中文叙述，所有数字已预计算       │
+│  · render: Jinja2 模板生成 HTML               │
+└─────────────────────────────────────────────┘
+```
+
+**为什么不让 OpenCode 直接生成整篇报告？**  
+因为 LLM 会**编造数据**（这是我们发现并修复的核心 bug）。项目 Pipeline 里的 LLM 只负责"把真实数字写成通顺的中文"，所有财务指标、排名、评分都是预先算好的，LLM 无法篡改。
+
+**默认复用 OpenCode 配置**  
+`config.py` 会首先尝试读取 `~/.config/opencode/opencode.jsonc`。只要 OpenCode 能工作，项目就能工作，**不需要额外配置**。`.env.example` 是给不用 OpenCode 的用户（CI/CD、命令行直接运行、其他 Agent 工具）准备的。
 
 ---
 
