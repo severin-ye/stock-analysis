@@ -45,9 +45,11 @@ PYTHONPATH="stock_kit" python3 -m tools.pipeline 英伟达 --dry-run
 PYTHONPATH="stock_kit" python3 -m tools.pipeline 英伟达
 ```
 
-#### 高级：使用 OpenCode LLM IPC 模式（无需 API 密钥）
+#### 备选：使用 OpenCode LLM IPC 模式
 
-如果你正在使用 OpenCode Agent，可以让 Pipeline 通过 **IPC**（进程间通信）调用 OpenCode 的 LLM，而不是直接连接 API：
+> **注意**：这是退化/备选方案。推荐直接使用 OpenCode 配置（见上方"配置 LLM API"）。
+
+如果 OpenCode 配置文件不可用，或你希望 Pipeline 通过 **IPC**（进程间通信）让 OpenCode Agent 代为调用 LLM，可使用：
 
 ```bash
 PYTHONPATH="stock_kit" python3 -m tools.pipeline 英伟达 --use-opencode-llm
@@ -61,9 +63,9 @@ PYTHONPATH="stock_kit" python3 -m tools.pipeline 英伟达 --use-opencode-llm
 - Pipeline 读取响应并继续执行
 
 **适用场景：**
-- 不想在项目中配置 API 密钥
-- 希望所有 LLM 调用统一走 OpenCode 的配额和审计
+- OpenCode 配置文件不可读（权限问题或配置格式不兼容）
 - 在受限制的环境中无法直接访问外部 API
+- 需要 OpenCode Agent 统一审计所有 LLM 调用
 
 ### 5. 本地预览报告
 
@@ -100,6 +102,10 @@ cd 股市分析 && python3 -m http.server 8888
 
 **默认复用 OpenCode 配置**  
 `config.py` 会首先尝试读取 `~/.config/opencode/opencode.jsonc`。只要 OpenCode 能工作，项目就能工作，**不需要额外配置**。`.env.example` 是给不用 OpenCode 的用户（CI/CD、命令行直接运行、其他 Agent 工具）准备的。
+
+**两种 LLM 调用方式：**
+- **主方案（推荐）**：Pipeline 直接读取 OpenCode 配置，直连 LLM API。这是默认行为，性能最好。
+- **备选方案**：通过 `--use-opencode-llm` 使用 IPC，让 OpenCode Agent 代为调用 LLM。仅在主方案不可用时使用（如配置不可读、网络受限）。
 
 ---
 

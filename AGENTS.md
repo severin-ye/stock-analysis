@@ -166,7 +166,8 @@ PYTHONPATH="stock_kit" python3 -m tools.pipeline 英伟达 --dry-run
 # 运行分析 Pipeline (完整, 调用 LLM)
 PYTHONPATH="stock_kit" python3 -m tools.pipeline 英伟达
 
-# 运行分析 Pipeline (通过 OpenCode Agent IPC 调用 LLM，无需 API 密钥)
+# 运行分析 Pipeline (备选: 通过 OpenCode Agent IPC 调用 LLM)
+# 仅当 opencode.jsonc 不可用时使用
 PYTHONPATH="stock_kit" python3 -m tools.pipeline 英伟达 --use-opencode-llm
 
 # 刷新公开数据 (yfinance 股票 + CoinGecko/DeFiLlama 加密基础数据, 无 AI 依赖)
