@@ -3,7 +3,6 @@ from pathlib import Path
 
 from tools.runtime.report_engine.stages.validate import validate
 
-
 BASE_DIR = Path(os.environ.get('STOCK_ANALYSIS_HOME', str(Path(__file__).resolve().parent.parent.parent.parent)))
 
 

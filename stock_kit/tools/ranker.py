@@ -9,8 +9,7 @@
 综合分 = L1排名×0.40 + L2×0.25 + L3×0.25 + L4×0.10 (越小越好)
 """
 
-from typing import TypedDict
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 from tools.fetcher import PriceSnapshot
 

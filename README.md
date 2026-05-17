@@ -6,6 +6,49 @@
 
 ---
 
+## 快速开始
+
+### 1. 克隆仓库
+
+```bash
+git clone <仓库地址>
+cd 股市分析
+```
+
+### 2. 安装依赖
+
+```bash
+pip install -r requirements.txt
+```
+
+### 3. 配置 LLM API
+
+复制环境变量模板并填写你的 API 密钥：
+
+```bash
+cp .env.example .env
+# 编辑 .env，填入 LLM_API_KEY 和 LLM_BASE_URL
+```
+
+### 4. 运行分析
+
+```bash
+# Dry-run（不调用 LLM，仅验证数据流）
+PYTHONPATH="stock_kit" python3 -m tools.pipeline 英伟达 --dry-run
+
+# 完整分析（调用 LLM 生成报告）
+PYTHONPATH="stock_kit" python3 -m tools.pipeline 英伟达
+```
+
+### 5. 本地预览报告
+
+```bash
+cd 股市分析 && python3 -m http.server 8888
+# 访问 http://localhost:8888/index.html
+```
+
+---
+
 ## 界面预览
 
 ### 排名总览页

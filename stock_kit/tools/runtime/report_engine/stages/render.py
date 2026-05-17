@@ -4,12 +4,14 @@
 纯 Python + Jinja2，不需要 LLM。
 """
 
-from pathlib import Path
-from jinja2 import Environment, FileSystemLoader
-from tools.runtime.report_engine.schema import StockReport, ChartType
 import json
 import logging
 import time
+from pathlib import Path
+
+from jinja2 import Environment, FileSystemLoader
+
+from tools.runtime.report_engine.schema import ChartType, StockReport
 
 TEMPLATE_DIR = Path(__file__).parent.parent / 'templates'
 

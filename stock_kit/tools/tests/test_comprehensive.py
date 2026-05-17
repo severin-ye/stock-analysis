@@ -3,11 +3,12 @@
 
 验证所有 8 家 260511 报告的质量，不依赖 LLM。
 """
-import pytest
-import json
 import os
 import re
 from pathlib import Path
+
+import pytest
+
 from tools.runtime.report_engine.schema import StockReport
 
 BASE = Path(os.environ.get('STOCK_ANALYSIS_HOME', str(Path(__file__).resolve().parent.parent.parent.parent)))
@@ -254,7 +255,6 @@ def test_schema_ranking_row():
 
 def test_schema_composite_fields():
     """验证 StockReport 包含 composite_score 和 composite_rank_8"""
-    from tools.runtime.report_engine.schema import StockReport
     r = StockReport(composite_score=1.85, composite_rank_8='#2/8',
                     ticker='TEST', company_name='测试', company_name_en='Test',
                     report_date='2026-05-11', data_date='测试')
@@ -264,7 +264,6 @@ def test_schema_composite_fields():
 
 def test_schema_layer_weights():
     """验证默认权重"""
-    from tools.runtime.report_engine.schema import StockReport
     r = StockReport(composite_score=0, composite_rank_8='', ticker='T', company_name='T',
                     company_name_en='T', report_date='', data_date='')
     assert r.layer_weights == {'L1': '40%', 'L2': '25%', 'L3': '25%', 'L4': '10%'}
@@ -272,8 +271,8 @@ def test_schema_layer_weights():
 
 def test_schema_fscore_validation():
     """F-Score items 必须有 9 条，每条的 score 是 0 或 1"""
-    from tools.runtime.report_engine.schema import FScoreItem, StockReport
-    
+    from tools.runtime.report_engine.schema import FScoreItem
+
     items = [
         FScoreItem(group='盈利', criterion='ROA > 0', score=1, reason='...'),
         FScoreItem(group='盈利', criterion='CFO > 0', score=1, reason='...'),
@@ -317,7 +316,9 @@ def test_schema_charts_required():
 
 def test_model_dump_json_converts_enums_to_strings():
     from tools.runtime.report_engine.schema import (
-        StockReport, ChartDef, ChartType, SignalBlock,
+        ChartDef,
+        ChartType,
+        SignalBlock,
     )
 
     report = StockReport(
@@ -371,8 +372,11 @@ def test_chart_type_enum_values():
 
 def test_signal_enum_values():
     from tools.runtime.report_engine.schema import (
-        SignalType, ConfidenceType, HorizonType,
-        ActionType, ConvictionType,
+        ActionType,
+        ConfidenceType,
+        ConvictionType,
+        HorizonType,
+        SignalType,
     )
     assert SignalType.BULLISH == 'BULLISH'
     assert SignalType.NEUTRAL == 'NEUTRAL'
@@ -390,10 +394,21 @@ def test_signal_enum_values():
 def test_render_integration(tmp_path):
     """用 mock 数据渲染 HTML 并验证关键元素"""
     from tools.runtime.report_engine.schema import (
-        StockReport, KPIItem, PriceChangeRow, CompanyOverview,
-        KeyMetricRow, CompetitonSection, RankingRow, FScoreItem,
-        ValuationMethod, ScenarioRow, RiskItem, SignalBlock,
-        VerdictSection, ChartDef, ChartType, ChartDataset,
+        ChartDataset,
+        ChartDef,
+        ChartType,
+        CompanyOverview,
+        CompetitonSection,
+        FScoreItem,
+        KeyMetricRow,
+        KPIItem,
+        PriceChangeRow,
+        RankingRow,
+        RiskItem,
+        ScenarioRow,
+        SignalBlock,
+        ValuationMethod,
+        VerdictSection,
     )
     from tools.runtime.report_engine.stages.render import render
 

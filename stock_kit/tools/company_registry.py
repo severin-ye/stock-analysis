@@ -12,8 +12,8 @@
 """
 
 import json
-from pathlib import Path
 from enum import Enum
+from pathlib import Path
 
 DATA_DIR = Path(__file__).parent.parent / 'data'
 COMPANIES_JSON = DATA_DIR / 'companies.json'

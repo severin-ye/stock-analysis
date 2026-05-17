@@ -8,7 +8,6 @@
   5. validator 检查 HTML 完整性
 """
 
-import json
 import logging
 import os
 import re
@@ -20,17 +19,30 @@ from typing import Optional
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from tools.runtime.report_engine.schema import (
-    StockReport, ModuleStatus, AssetCategory, ChartType, ChartDef, ChartDataset,
-    KPIItem, RankingRow, ValuationMethod, ScenarioRow,
-)
-from tools.runtime.report_engine.stages.scaffold import scaffold
-from tools.runtime.report_engine.stages.render import render_to_file
-
-from tools.fetcher import fetch_all_8, fetch_yfinance, fetch_crypto_public, PriceSnapshot, TICKER_MAP, YF_TICKER_MAP
-from tools.market_data import source_chain_summary
-from tools.ranker import compute_greenblatt, compute_crypto_ranking, compute_pos_crypto_ranking, RankingResult, apply_cross_asset_scores
 from tools.company_registry import ticker_to_name_zh
+from tools.fetcher import YF_TICKER_MAP, PriceSnapshot, fetch_all_8, fetch_crypto_public, fetch_yfinance
+from tools.market_data import source_chain_summary
+from tools.ranker import (
+    RankingResult,
+    apply_cross_asset_scores,
+    compute_crypto_ranking,
+    compute_greenblatt,
+    compute_pos_crypto_ranking,
+)
+from tools.runtime.report_engine.schema import (
+    AssetCategory,
+    ChartDataset,
+    ChartDef,
+    ChartType,
+    KPIItem,
+    ModuleStatus,
+    RankingRow,
+    ScenarioRow,
+    StockReport,
+    ValuationMethod,
+)
+from tools.runtime.report_engine.stages.render import render_to_file
+from tools.runtime.report_engine.stages.scaffold import scaffold
 
 BASE_DIR = Path(os.environ.get('STOCK_ANALYSIS_HOME', str(Path(__file__).resolve().parent.parent.parent)))
 LOG_DIR = BASE_DIR / '.sisyphus' / 'pipeline_logs'
@@ -516,8 +528,8 @@ def apply_authoritative_report_data(report: StockReport, price_info: PriceSnapsh
             report.verdict.rec_class = 'neut'
 
     report.s6_body_html = (
-        f"<p>未来展望包含 LLM 生成的悲观/基准/乐观三档情景假设（模型分析）；"
-        f"如有分析师目标价等真实数据，将在下方「真实数据参考」中单独列出。</p>"
+        "<p>未来展望包含 LLM 生成的悲观/基准/乐观三档情景假设（模型分析）；"
+        "如有分析师目标价等真实数据，将在下方「真实数据参考」中单独列出。</p>"
     )
 
     # 保留 LLM 生成的估值方法，追加真实数据
@@ -741,6 +753,7 @@ def run_llm_with_real_data(report: StockReport, real_data_prompt: str,
                            logger: logging.Logger) -> StockReport:
     """调用 LLM, 注入真实数据 — 无 SCHEMA_HINT 污染"""
     from langchain_openai import ChatOpenAI
+
     from tools.runtime.report_engine.config import get_llm_config
 
     t0 = time.time()
@@ -917,7 +930,7 @@ def run_analysis(company_name: str, dry_run: bool = False) -> Optional[str]:
         logger.warning(f"  {ticker}: 未抓取到数据")
 
     # Stage 2: Rank (pure math)
-    logger.info(f"[Stage 2: rank] 纯数学四层加权排名")
+    logger.info("[Stage 2: rank] 纯数学四层加权排名")
 
     all_ebit_ev = {}
     all_roic = {}
@@ -1000,7 +1013,9 @@ def run_analysis(company_name: str, dry_run: bool = False) -> Optional[str]:
     report = run_llm_with_real_data(report, real_data_prompt, logger)
 
     # LLM 失败检测: 如果 report 仍为空壳（无 charts、无 verdict），跳过 render
-    if not report.charts and not report.company_overview:
+    charts = getattr(report, 'charts', None)
+    company_overview = getattr(report, 'company_overview', None)
+    if not charts and not company_overview:
         logger.error("  LLM 返回空报告，跳过 render。请检查 API 配置或网络连接。")
         return None
 

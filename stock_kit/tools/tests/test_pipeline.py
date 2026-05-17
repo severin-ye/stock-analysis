@@ -1,10 +1,10 @@
+import importlib
 from datetime import datetime
 from types import SimpleNamespace
-import importlib
 
-from tools.fetcher import PriceSnapshot
 import tools.index_generator as index_generator
 import tools.pipeline as pipeline
+from tools.fetcher import PriceSnapshot
 
 
 class _DummyLogger:
@@ -12,6 +12,9 @@ class _DummyLogger:
         pass
 
     def warning(self, *args, **kwargs):
+        pass
+
+    def error(self, *args, **kwargs):
         pass
 
 
@@ -32,6 +35,8 @@ def test_run_analysis_regenerates_index_after_report_write(monkeypatch, tmp_path
             ticker='NVDA',
             exchange='NASDAQ',
             asset_category=SimpleNamespace(value='stock'),
+            charts=[SimpleNamespace()],
+            company_overview=SimpleNamespace(),
         ),
     )
     monkeypatch.setattr(

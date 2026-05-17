@@ -9,10 +9,10 @@
 公司映射从 company_registry 统一读取 (Single Source of Truth)。
 """
 
-import json
 import re
 from dataclasses import dataclass
 from pathlib import Path
+
 from tools.company_registry import ticker_to_stock_registry
 
 DATA_DIR = Path(__file__).parent.parent / 'data'

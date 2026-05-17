@@ -1,17 +1,31 @@
 """生成一份 mock NVDA 报告，验证模板输出"""
-import json
 import os
 from pathlib import Path
 
-from tools.runtime.report_engine.stages.scaffold import scaffold
-from tools.runtime.report_engine.stages.render import render, render_to_file
 from tools.runtime.report_engine.schema import (
-    StockReport, KPIItem, PriceChangeRow, CompanyOverview, KeyMetricRow,
-    CompetitonSection, RankingRow, FScoreItem, ValuationMethod,
-    ScenarioRow, RiskItem, SignalBlock, VerdictSection,
-    ChartDef, ChartDataset, ChartType, SignalType, ConfidenceType,
-    HorizonType, ActionType, ConvictionType
+    ActionType,
+    ChartDataset,
+    ChartDef,
+    ChartType,
+    CompanyOverview,
+    CompetitonSection,
+    ConfidenceType,
+    ConvictionType,
+    FScoreItem,
+    HorizonType,
+    KeyMetricRow,
+    KPIItem,
+    PriceChangeRow,
+    RankingRow,
+    RiskItem,
+    ScenarioRow,
+    SignalBlock,
+    SignalType,
+    ValuationMethod,
+    VerdictSection,
 )
+from tools.runtime.report_engine.stages.render import render, render_to_file
+from tools.runtime.report_engine.stages.scaffold import scaffold
 
 report = scaffold('英伟达')
 
@@ -60,7 +74,6 @@ report.greenblatt_ranking = [
     RankingRow(layer='L2', dimension='🏭 赚不赚钱', metric='ROIC', value='50%+', rank='#1/6', verdict='全球最赚钱半导体企业'),
     RankingRow(layer='L3', dimension='🛡️ 会不会崩', metric='F-Score', value='8/9', rank='—', verdict='财务极其健康'),
 ]
-report.greenblatt_summary = 'Greenblatt: EBIT/EV 2.52% · ROIC 50%+ · F-Score 8/9 → 强力推荐'
 report.f_score_total = "8"
 report.f_score_items = [
     FScoreItem(group='盈利', criterion='ROA > 0', score=1, reason='TTM 净利润率 55.6%'),

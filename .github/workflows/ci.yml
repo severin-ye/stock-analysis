@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  lint-and-test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ['3.12']
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt -r requirements-dev.txt
+
+    - name: Lint with ruff
+      run: |
+        ruff check stock_kit/tools/ --exclude tests
+
+    - name: Type check with mypy
+      run: |
+        mypy stock_kit/tools/ --exclude tests --ignore-missing-imports
+
+    - name: Test with pytest
+      run: |
+        PYTHONPATH="stock_kit" pytest stock_kit/tools/tests/test_engine.py stock_kit/tools/tests/test_pipeline.py stock_kit/tools/tests/test_ranker.py -v
+
+    - name: Verify imports
+      run: |
+        PYTHONPATH="stock_kit" python3 -c "from tools.pipeline import run_analysis; print('Import OK')"
+        PYTHONPATH="stock_kit" python3 -c "from tools.fetcher import fetch_all_8; print('Fetcher OK')"
+        PYTHONPATH="stock_kit" python3 -c "from tools.ranker import compute_greenblatt; print('Ranker OK')"

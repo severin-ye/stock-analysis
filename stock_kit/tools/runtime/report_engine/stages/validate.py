@@ -4,9 +4,10 @@
 三套并行: Pydantic schema 检查 + HTML 结构检查 + 数据真实性交叉验证。
 """
 
-from pathlib import Path
 import json
 import re
+from pathlib import Path
+
 from tools.runtime.report_engine.schema import StockReport
 
 
@@ -77,7 +78,7 @@ def validate_html_file(filepath: str) -> list[str]:
 
 def validate(report: StockReport | None = None, html_path: str | None = None) -> tuple[bool, list[str]]:
     """三套并行验证"""
-    all_issues = []
+    all_issues: list[str] = []
 
     if report is not None:
         schema_issues = validate_schema(report)

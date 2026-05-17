@@ -1,9 +1,12 @@
 """Stage 1+2: 一站式生成 (搜索 + 分析合并) — 四层加权排名"""
 
+
+import logging
+
 from langchain_openai import ChatOpenAI
+
 from tools.runtime.report_engine.config import get_llm_config
-from tools.runtime.report_engine.schema import StockReport, ModuleStatus
-import json
+from tools.runtime.report_engine.schema import ModuleStatus, StockReport
 
 SCHEMA_HINT = """
 必须返回的 JSON 结构，所有字段名必须精确匹配（数值从上文真实数据区块取，此处仅为格式示例）:
@@ -202,7 +205,7 @@ BTC 不适用传统财务指标，改为:
     log = logger or logging.getLogger('pipeline')
     log.info(f"  LLM 请求: model={cfg['model']}, base_url={cfg['base_url']}")
     log.info(f"  Prompt 长度: {len(prompt):,} chars")
-    log.info(f"  等待 LLM 响应 (Deepseek V4 Pro 通常 60-180s)...")
+    log.info("  等待 LLM 响应 (Deepseek V4 Pro 通常 60-180s)...")
 
     try:
         response = llm.invoke(prompt, timeout=300)

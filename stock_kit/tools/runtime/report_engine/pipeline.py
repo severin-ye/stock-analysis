@@ -4,20 +4,20 @@ LangGraph 编排 — 带详细日志
     python -m tools.runtime.report_engine.pipeline 小米
 """
 
+import logging
 import os
 import sys
-import logging
 import time
+from datetime import datetime
 from pathlib import Path
 from typing import TypedDict
-from datetime import datetime
 
-from langgraph.graph import StateGraph, END
+from langgraph.graph import END, StateGraph
 
 from tools.runtime.report_engine.schema import StockReport
+from tools.runtime.report_engine.stages.render import render_to_file
 from tools.runtime.report_engine.stages.scaffold import scaffold
 from tools.runtime.report_engine.stages.search import run_search
-from tools.runtime.report_engine.stages.render import render_to_file
 from tools.runtime.report_engine.stages.validate import validate
 
 BASE_DIR = Path(os.environ.get('STOCK_ANALYSIS_HOME', str(Path(__file__).resolve().parents[4])))
@@ -71,7 +71,7 @@ def stage_scaffold(state: PipelineState) -> PipelineState:
 def stage_search(state: PipelineState) -> PipelineState:
     t0 = time.time()
     logger.info(f"{'='*60}")
-    logger.info(f"[Stage 1+2: search+analyze] 开始")
+    logger.info("[Stage 1+2: search+analyze] 开始")
     report = StockReport(**state['report'])
     logger.info(f"  Prompt: {report.company_name} ({report.ticker}), {report.asset_category.value}")
 
@@ -96,7 +96,7 @@ def stage_search(state: PipelineState) -> PipelineState:
 
 def stage_render(state: PipelineState) -> PipelineState:
     t0 = time.time()
-    logger.info(f"[Stage 3: render] 开始")
+    logger.info("[Stage 3: render] 开始")
     report = StockReport(**state['report'])
     today = datetime.now().strftime('%y%m%d')
     output_dir = Path(report.company_dir) if report.company_dir else (BASE_DIR / '分析输出' / state['company_name'])
@@ -119,7 +119,7 @@ def stage_render(state: PipelineState) -> PipelineState:
 
 def stage_validate(state: PipelineState) -> PipelineState:
     t0 = time.time()
-    logger.info(f"[Stage 4: validate] 开始")
+    logger.info("[Stage 4: validate] 开始")
     report = StockReport(**state['report'])
     passed, issues = validate(report, state.get('html_path', ''))
     state['errors'] = issues

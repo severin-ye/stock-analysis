@@ -5,12 +5,20 @@
 
 import json
 import os
-from pathlib import Path
 from datetime import datetime
-from tools.fetcher import fetch_all_8
-from tools.ranker import compute_greenblatt, compute_crypto_ranking, compute_pos_crypto_ranking, apply_cross_asset_scores
+from pathlib import Path
+
 from tools.company_registry import (
-    ticker_to_name_zh, ticker_to_info, MARKET_GROUPS, registry,
+    MARKET_GROUPS,
+    ticker_to_info,
+    ticker_to_name_zh,
+)
+from tools.fetcher import fetch_all_8
+from tools.ranker import (
+    apply_cross_asset_scores,
+    compute_crypto_ranking,
+    compute_greenblatt,
+    compute_pos_crypto_ranking,
 )
 
 BASE_DIR = Path(os.environ.get('STOCK_ANALYSIS_HOME', str(Path(__file__).resolve().parent.parent.parent)))
@@ -108,15 +116,15 @@ def _card_html(name: str, ticker: str, exchange: str, rank_pos: int, total: int,
     lines = [
         f'<a class="rank-link" href="{report_rel}">',
         f'  <div class="rank-card {rc}{extra_class}">',
-        f'    <div class="rank-top">',
+        '    <div class="rank-top">',
         f'      <div class="rank-pos">#{rank_pos}<sup>/{total}</sup></div>',
         f'      <div class="ticker-name">{name} <small>{ticker} · {exchange}</small></div>',
-        f'    </div>',
-        f'    <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:4px">',
+        '    </div>',
+        '    <div style="display:flex;align-items:baseline;gap:8px;margin-bottom:4px">',
         f'      <div class="score-big" style="color:{score_color}">{score_10:.1f}</div>',
-        f'    </div>',
-        f'    <div style="font-size:11px;color:var(--muted);margin-bottom:6px">统一十分制评分</div>',
-        f'    <div class="metrics">',
+        '    </div>',
+        '    <div style="font-size:11px;color:var(--muted);margin-bottom:6px">统一十分制评分</div>',
+        '    <div class="metrics">',
     ]
     for label, value, pos in metrics:
         lines.append(f'      <div class="m"><label>{label}</label><span>{value}</span><span class="pos">{pos}</span></div>')
