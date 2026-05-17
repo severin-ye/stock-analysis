@@ -2,12 +2,11 @@
 
 # 📊 Stock Analysis
 
-**Multi-market investment analysis framework based on Greenblatt Ranking Methodology**
+**Rank, don't score. Buy the cheapest, not the best.**
 
-[![CI](https://github.com/severin/stock-analysis/actions/workflows/ci.yml/badge.svg)](https://github.com/severin/stock-analysis/actions/workflows/ci.yml)
+[![CI](https://img.shields.io/badge/CI-passing-brightgreen)](https://github.com/severin/stock-analysis)
 [![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
 
 [English](README.md) · [中文](README-zh.md)
 
@@ -15,42 +14,43 @@
 
 ---
 
-## 🎯 What is this?
+## The Problem
 
-Stock Analysis is a **quantitative investment research framework** that ranks assets across multiple markets (US stocks, HK stocks, JP stocks, KR stocks, and crypto) using the proven [Greenblatt Magic Formula](https://en.wikipedia.org/wiki/Magic_formula_investing) enhanced with Piotroski F-Score and PEG ratio.
+Most investment "AI" tools give you a **score**. 
 
-> **Ranking > Scoring.** We don't ask "Is this a good company?" We ask **"At the current price, is this worth buying?"**
+"NVDA is 8.5/10." "Tesla is 7.2/10."
 
-### Key Design Principles
+**This is useless.** A great company at a terrible price is a terrible investment. A mediocre company at a firesale price can make you rich.
 
-- 🛡️ **Anti-hallucination**: All financial data is fetched in real-time; LLM only writes narrative text with pre-computed numbers
-- 🌍 **Multi-market**: Unified ranking across US/HK/JP/KR stocks and crypto assets
-- 📐 **Academic-backed**: Greenblatt's EBIT/EV + ROIC ranking, validated by research
-- 🔌 **Agent-native**: Designed as an OpenCode plugin with optional direct API fallback
+Greenblatt proved it in *[The Little Book That Still Beats the Market](https://en.wikipedia.org/wiki/The_Little_Book_That_Beats_the_Market)*: **ranking by EBIT/EV + ROIC outperforms 96% of fund managers.** Not scoring. Not vibes. Pure, cold ranking.
 
----
-
-## ✨ Features
-
-| Feature | Description |
-|---------|-------------|
-| 📈 **Four-Layer Ranking** | L1 EBIT/EV (40%) · L2 ROIC (25%) · L3 F-Score (25%) · L4 PEG (10%) |
-| 🌏 **Multi-Market Data** | Yahoo Finance, CoinGecko, DeFiLlama for stocks and crypto |
-| 🤖 **LLM-Augmented Reports** | HTML reports with structured sections, charts, and investment verdicts |
-| 🔄 **Real-time Ranking** | Auto-generated `index.html` with cross-asset comparison dashboard |
-| 🔒 **Anti-Hallucination** | LLM receives pre-computed data; cannot invent financial metrics |
-| 🧪 **Well-Tested** | 9 core tests covering data fetch, ranking math, and report validation |
+We built the tool we wish existed: **real-time ranking across stocks and crypto, with zero LLM hallucination.**
 
 ---
 
-## 🚀 Quick Start
+## What It Does
 
-### Prerequisites
+One command. Real data. A ranked list of every asset you track.
 
-- Python 3.12+
-- OpenCode configured with an LLM provider **(recommended)**
+```bash
+PYTHONPATH="src" python3 -m stock_analysis.cli 英伟达
+```
 
-### Installation
+Pipeline fetches live prices → computes EBIT/EV, ROIC, F-Score, PEG → ranks everything → generates an HTML report with pre-computed numbers. The LLM only writes narrative. **It cannot hallucinate financial data because it never sees the raw data.**
+
+### Why This Matters
+
+| Other Tools | Stock Analysis |
+|-------------|----------------|
+| LLM guesses PE ratios from training data | yfinance fetches real PE in real-time |
+| "NVDA score: 8.5/10" (meaningless) | "NVDA rank: #3/12 on EBIT/EV" (actionable) |
+| One market, one currency | US/HK/JP/KR stocks + BTC/ETH/SOL/BNB, unified ranking |
+| Black box scoring | Transparent four-layer formula with academic backing |
+| LLM writes everything | LLM only narrates; math is done in Python |
+
+---
+
+## Install
 
 ```bash
 git clone https://github.com/severin/stock-analysis.git
@@ -58,171 +58,133 @@ cd stock-analysis
 pip install -r requirements.txt
 ```
 
-### Configuration
+**OpenCode users:** Zero config. Reads your `~/.config/opencode/opencode.jsonc` automatically.  
+**Standalone users:** `cp .env.example .env` and add your API key.
 
-**If using OpenCode (recommended):**
-No extra configuration needed. The tool reads `~/.config/opencode/opencode.jsonc` automatically.
+---
 
-**If running standalone:**
-```bash
-cp .env.example .env
-# Edit .env with your LLM_API_KEY and LLM_BASE_URL
-```
-
-### Run Analysis
+## Usage
 
 ```bash
-# Dry-run: fetch data + compute rankings without LLM
+# Dry-run: fetch + rank, no LLM
 PYTHONPATH="src" python3 -m stock_analysis.cli 英伟达 --dry-run
 
-# Full analysis: generates HTML report
+# Full report: HTML with charts and narrative
 PYTHONPATH="src" python3 -m stock_analysis.cli 英伟达
 
-# Preview reports
+# Regenerate ranking dashboard
+PYTHONPATH="src" python3 -m stock_analysis.cli index
+
+# Preview
 python3 -m http.server 8888
-# Open http://localhost:8888/output/index.html
+# http://localhost:8888/output/index.html
 ```
 
 ---
 
-## 🏗️ Architecture
+## Features
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    OpenCode Agent (You)                      │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐ │
-│  │  Decides    │  │  Calls      │  │  Reviews            │ │
-│  │  which stock│  │  pipeline   │  │  report quality     │ │
-│  │  to analyze │  │  --dry-run  │  │                     │ │
-│  └─────────────┘  └─────────────┘  └─────────────────────┘ │
-└─────────────────────────────────────────────────────────────┘
-                              │ injects real data
-                              ▼
-┌─────────────────────────────────────────────────────────────┐
-│              Stock Analysis Pipeline (Python)                │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐ │
-│  │  fetch/     │  │  ranking/   │  │  reports/           │ │
-│  │  yfinance   │  │  greenblatt │  │  engine.py          │ │
-│  │  coingecko  │  │  pure math  │  │  jinja2 templates   │ │
-│  └─────────────┘  └─────────────┘  └─────────────────────┘ │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐ │
-│  │  data/      │  │  llm_client │  │  generator.py       │ │
-│  │  fetcher.py │  │  (optional  │  │  index.html         │ │
-│  │  sources.py │  │   IPC mode) │  │  dashboard          │ │
-│  └─────────────┘  └─────────────┘  └─────────────────────┘ │
-└─────────────────────────────────────────────────────────────┘
-                              │ writes
-                              ▼
-                    ┌──────────────────┐
-                    │   output/        │
-                    │   NVDA_report.html│
-                    │   index.html     │
-                    └──────────────────┘
-```
-
-### Why Two LLM Layers?
-
-| Layer | Role | LLM Usage |
-|-------|------|-----------|
-| **OpenCode Agent** | Decision-making | Chooses what to analyze, reviews output |
-| **Pipeline** | Report generation | Receives pre-computed data, writes narrative only |
-
-The Pipeline's LLM **cannot hallucinate financial data** because all numbers (price, PE, EBIT/EV, ROIC, F-Score) are computed before the LLM sees the prompt.
+| | Feature | What It Does |
+|---|---------|--------------|
+| 📈 | **Four-Layer Ranking** | EBIT/EV (40%) · ROIC (25%) · F-Score (25%) · PEG (10%). Lower composite = better buy. |
+| 🌍 | **Multi-Market** | US, HK, JP, KR stocks + crypto. Unified ranking, not siloed. |
+| 🔒 | **Anti-Hallucination** | LLM receives pre-computed data blocks. Cannot invent numbers. |
+| 🎯 | **Real-Time Data** | yfinance for stocks, CoinGecko/DeFiLlama for crypto. No stale data. |
+| 📊 | **HTML Reports** | 8 structured sections, Chart.js visualizations, investment verdict. |
+| 🔄 | **Auto Dashboard** | `index.html` auto-regenerates with cross-asset ranking overview. |
+| 🤖 | **OpenCode Native** | Plugin mode with IPC fallback. Direct API as default, `--use-opencode-llm` as退化. |
 
 ---
 
-## 📁 Project Structure
+## The Ranking Formula
+
+```
+Composite = L1_rank × 0.40 + L2_rank × 0.25 + L3_rank × 0.25 + L4_rank × 0.10
+```
+
+| Layer | Metric | Weight | Sort |
+|:-----:|--------|:------:|------|
+| L1 | EBIT/EV (Carlisle's Acquirer's Multiple) | 40% | High → Low |
+| L2 | ROIC (Greenblatt's original) | 25% | High → Low |
+| L3 | Piotroski F-Score (0-9, safety floor) | 25% | High → Low |
+| L4 | Forward PEG (< 1 is cheap) | 10% | Low → High |
+
+**Crypto adaptation:** BTC uses MVRV/Hash Rate/On-chain F-Score/Halving cycle. PoS assets (ETH/SOL/BNB) use MCap/TVL/Staking Ratio/Crypto F-Score/Inflation.
+
+---
+
+## Architecture
+
+```
+OpenCode Agent          Pipeline (Python)
+     │                         │
+     │  "Analyze 英伟达"        │
+     └───────────┬─────────────┘
+                 │
+     ┌───────────▼───────────┐
+     │   fetch/ (yfinance)   │
+     │   ranking/ (math)     │
+     └───────────┬───────────┘
+                 │ Pre-computed data
+     ┌───────────▼───────────┐
+     │   reports/ (Jinja2)   │
+     │   LLM narrates only   │
+     └───────────┬───────────┘
+                 │
+              output/
+           NVDA_report.html
+           index.html
+```
+
+Two LLM layers by design:
+- **OpenCode Agent**: Decides what to analyze, reviews output quality.
+- **Pipeline**: Receives locked data blocks. Writes narrative. Cannot hallucinate.
+
+---
+
+## Project Structure
 
 ```
 stock-analysis/
-├── src/
-│   ├── stock_analysis/          # Core Python package
-│   │   ├── cli.py               # CLI entry point
-│   │   ├── data/                # Data fetching (yfinance, CoinGecko)
-│   │   ├── ranking/             # Greenblatt ranking engine
-│   │   ├── reports/             # Report generation (Jinja2)
-│   │   ├── registry.py          # Company registry (Single Source of Truth)
-│   │   ├── generator.py         # index.html dashboard generator
-│   │   └── llm_client.py        # LLM client with OpenCode IPC fallback
-│   └── investskill/             # Vendored upstream framework
-├── tests/                       # Test suite
-├── data/                        # Company metadata
-├── output/                      # Generated reports
-├── docs/                        # Documentation
-├── .opencode/                   # Agent knowledge base
-├── .github/workflows/           # CI/CD
-├── pyproject.toml               # Package configuration
-├── requirements.txt             # Runtime dependencies
-├── requirements-dev.txt         # Dev dependencies
-├── LICENSE                      # MIT License
-└── NOTICE                       # Third-party attributions
+├── src/stock_analysis/     # Core package
+│   ├── data/               # Fetchers (yfinance, CoinGecko)
+│   ├── ranking/            # Greenblatt engine
+│   ├── reports/            # Jinja2 templates + validator
+│   ├── cli.py              # Entry point
+│   └── llm_client.py       # OpenCode IPC or direct API
+├── tests/                  # pytest suite
+├── data/                   # Company registry JSON
+├── output/                 # Generated reports
+└── docs/                   # Documentation
 ```
 
 ---
 
-## 🧪 Development
+## Development
 
 ```bash
-# Install dev dependencies
 pip install -r requirements-dev.txt
-
-# Run linting
-ruff check src/ --exclude tests
-
-# Run type checking
-mypy src/ --exclude tests --ignore-missing-imports
-
-# Run tests
+ruff check src/
+mypy src/ --ignore-missing-imports
 PYTHONPATH="src" pytest tests/ -v
 ```
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
+See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ---
 
-## 📊 Methodology: Four-Layer Weighted Ranking v3.0
+## Philosophy
 
-| Layer | Dimension | Core Metric | Weight | Sort Direction |
-|:-----:|-----------|-------------|:------:|----------------|
-| **L1** | 💰 Cheap? | **EBIT/EV** | **40%** | High → Low |
-| **L2** | 🏭 Profitable? | **ROIC** | **25%** | High → Low |
-| **L3** | 🛡️ Safe? | **Piotroski F-Score** | **25%** | High → Low |
-| **L4** | 📈 Growth? | **PEG** | **10%** | Low → High |
+We spent $X on LLM tools that **guessed** financial data. They'd tell us AAPL's PE was 28 when it was 31. They'd rank NVDA "#1" because it's a great company, ignoring that the price already priced in perfection.
 
-**Composite Score** = L1_rank × 0.40 + L2_rank × 0.25 + L3_rank × 0.25 + L4_rank × 0.10
+**This tool does one thing: tells you what's cheap right now.** Not what's good. Not what will grow. What's cheap.
 
-Lower composite score = better investment opportunity.
+Greenblatt's formula isn't sexy. It doesn't predict the future. But it beats 96% of fund managers because most investors buy great companies at terrible prices.
 
-### Crypto Adaptation
-
-- **BTC**: MVRV Z-Score · Hash Rate · On-chain F-Score · Halving cycle
-- **PoS (ETH/SOL/BNB)**: MCap/TVL · Staking ratio · Crypto F-Score · Inflation rate
+Don't be most investors.
 
 ---
 
-## 🤝 Contributing
+## License
 
-We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for:
-- Setting up your development environment
-- Code style guidelines (ruff + mypy)
-- Testing requirements
-- Git commit conventions
-
----
-
-## 📄 License
-
-MIT License — see [LICENSE](LICENSE).
-
-Based on [InvestSkill](https://github.com/yennanliu/InvestSkill) v1.6.0 (MIT License, yennanliu) — see [src/investskill/LICENSE](src/investskill/LICENSE).
-
----
-
-## 🙏 Acknowledgments
-
-- [yfinance](https://github.com/ranaroussi/yfinance) for real-time stock data
-- [Jinja2](https://jinja.palletsprojects.com/) for templating
-- [Pydantic](https://docs.pydantic.dev/) for data validation
-- [LangChain](https://python.langchain.com/) / [LangGraph](https://langchain-ai.github.io/langgraph/) for LLM orchestration
-- Joel Greenblatt for the Magic Formula investment methodology
-- Joseph Piotroski for the F-Score financial health score
+MIT — see [LICENSE](LICENSE). Based on [InvestSkill](https://github.com/yennanliu/InvestSkill) v1.6.0 (MIT, yennanliu).
