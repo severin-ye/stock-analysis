@@ -1190,27 +1190,54 @@ def run_analysis(company_name: str, dry_run: bool = False, use_opencode_llm: boo
     return html_path
 
 
+def parse_company_names(argv: list[str]) -> list[str]:
+    """解析多公司名称
+
+    支持格式:
+        stock-analysis 英伟达
+        stock-analysis 英伟达 苹果 特斯拉
+        stock-analysis 英伟达,苹果,特斯拉
+        stock-analysis 英伟达、苹果、特斯拉
+    """
+    names = []
+    for arg in argv[1:]:
+        if arg.startswith("-"):
+            continue
+        if arg in ("index", "watch", "validate", "batch"):
+            continue
+        # 支持逗号或顿号分隔
+        if "," in arg or "、" in arg:
+            names.extend([n.strip() for n in arg.replace("、", ",").split(",") if n.strip()])
+        else:
+            names.append(arg)
+    return names
+
+
 def main():
     """CLI entry point"""
     if len(sys.argv) < 2 or sys.argv[1] in ("--help", "-h"):
         print("stock-analysis — Greenblatt Ranking Investment Analysis Tool")
         print("")
         print("Usage:")
-        print("  stock-analysis <company_name> [--dry-run] [--use-opencode-llm]")
+        print("  stock-analysis <company_name> [company2 ...] [--dry-run] [--use-opencode-llm]")
+        print("  stock-analysis <company1,company2,company3> [--dry-run]")
         print("  stock-analysis index")
         print("  stock-analysis watch")
         print("  stock-analysis validate <report_path>")
+        print("  stock-analysis batch <company1> <company2> ... [--dry-run] [--use-opencode-llm]")
         print("")
         print("Options:")
         print("  --dry-run             Skip LLM calls, validate data pipeline only")
         print("  --use-opencode-llm    Use OpenCode Agent LLM via IPC instead of direct API")
         print("  -h, --help            Show this help message")
-        sys.exit(0 if sys.argv[1] in ("--help", "-h") else 1)
+        sys.exit(0 if len(sys.argv) > 1 and sys.argv[1] in ("--help", "-h") else 1)
+
     if sys.argv[1] == "index":
         from stock_analysis.generator import regenerate
 
         regenerate()
         sys.exit(0)
+
     if sys.argv[1] == "watch":
         logger = build_logger("watch-index")
         try:
@@ -1218,6 +1245,7 @@ def main():
         except KeyboardInterrupt:
             logger.info("[watch] Stopped watching")
         sys.exit(0)
+
     if sys.argv[1] == "validate":
         if len(sys.argv) < 3:
             print("Usage: stock-analysis validate <report_path>")
@@ -1230,10 +1258,38 @@ def main():
         for i in issues:
             print(f"  {i}")
         sys.exit(0 if passed else 1)
-    company = sys.argv[1]
+
+    if sys.argv[1] == "batch":
+        # 批量分析模式
+        company_names = parse_company_names(sys.argv[1:])
+        if not company_names:
+            print("Usage: stock-analysis batch <company1> <company2> ...")
+            sys.exit(1)
+        dry = "--dry-run" in sys.argv
+        use_opencode = "--use-opencode-llm" in sys.argv
+
+        from stock_analysis.batch import run_batch_analysis
+
+        run_batch_analysis(company_names, dry_run=dry, use_opencode_llm=use_opencode)
+        sys.exit(0)
+
+    # 解析公司名称（支持多公司）
+    company_names = parse_company_names(sys.argv)
     dry = "--dry-run" in sys.argv
     use_opencode = "--use-opencode-llm" in sys.argv
-    run_analysis(company, dry_run=dry, use_opencode_llm=use_opencode)
+
+    if len(company_names) == 1:
+        # 单公司：保持原有行为
+        run_analysis(company_names[0], dry_run=dry, use_opencode_llm=use_opencode)
+    elif len(company_names) > 1:
+        # 多公司：并行批量分析
+        from stock_analysis.batch import run_batch_analysis
+
+        run_batch_analysis(company_names, dry_run=dry, use_opencode_llm=use_opencode)
+        sys.exit(0)
+    else:
+        print("Usage: stock-analysis <company_name> [company2 ...] [--dry-run]")
+        sys.exit(1)
 
 
 if __name__ == "__main__":
