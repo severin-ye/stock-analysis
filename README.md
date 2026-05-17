@@ -12,7 +12,7 @@
 
 ```bash
 git clone <仓库地址>
-cd 股市分析
+cd stock-analysis
 ```
 
 ### 2. 安装依赖
@@ -39,10 +39,10 @@ cp .env.example .env
 
 ```bash
 # Dry-run（不调用 LLM，仅验证数据流）
-PYTHONPATH="stock_kit" python3 -m tools.pipeline 英伟达 --dry-run
+PYTHONPATH="src" python3 -m tools.pipeline 英伟达 --dry-run
 
 # 完整分析（调用 LLM 生成报告）
-PYTHONPATH="stock_kit" python3 -m tools.pipeline 英伟达
+PYTHONPATH="src" python3 -m tools.pipeline 英伟达
 ```
 
 #### 备选：使用 OpenCode LLM IPC 模式
@@ -52,7 +52,7 @@ PYTHONPATH="stock_kit" python3 -m tools.pipeline 英伟达
 如果 OpenCode 配置文件不可用，或你希望 Pipeline 通过 **IPC**（进程间通信）让 OpenCode Agent 代为调用 LLM，可使用：
 
 ```bash
-PYTHONPATH="stock_kit" python3 -m tools.pipeline 英伟达 --use-opencode-llm
+PYTHONPATH="src" python3 -m tools.pipeline 英伟达 --use-opencode-llm
 ```
 
 **原理：**
@@ -70,7 +70,7 @@ PYTHONPATH="stock_kit" python3 -m tools.pipeline 英伟达 --use-opencode-llm
 ### 5. 本地预览报告
 
 ```bash
-cd 股市分析 && python3 -m http.server 8888
+cd stock-analysis && python3 -m http.server 8888
 # 访问 http://localhost:8888/index.html
 ```
 
@@ -169,7 +169,7 @@ python3 -m http.server 8888
 ```bash
 cd /home/severin/Codelib/股市分析
 source .venv/bin/activate
-PYTHONPATH="stock_kit" python3 -m tools.pipeline watch
+PYTHONPATH="src" python3 -m tools.pipeline watch
 ```
 
 该命令会轮询监听 分析输出 下的 HTML 报告新增、修改、删除和重命名；一旦检测到变化，就自动重建 index.html。
@@ -204,7 +204,7 @@ PYTHONPATH="stock_kit" python3 -m tools.pipeline watch
 ├── AGENTS.md                 ← AI Agent 内部知识库
 ├── assets/
 │   └── readme/               ← README 截图资源
-├── stock_kit/
+├── src/
 │   ├── InvestSkill/          ← 分析框架核心（只保留 prompt、模板、文档等静态资产）
 │   └── tools/                ← 全部 Python 运行时代码与测试
 │       ├── pipeline.py
@@ -253,7 +253,7 @@ HTML 报告包含 8 个结构化章节（S1-S8），最终输出投资建议（V
 
 MIT License — see [LICENSE](LICENSE).
 
-Based on InvestSkill v1.6.0 (MIT License, yennanliu) — see [stock_kit/InvestSkill/LICENSE](stock_kit/InvestSkill/LICENSE).
+Based on InvestSkill v1.6.0 (MIT License, yennanliu) — see [src/InvestSkill/LICENSE](src/InvestSkill/LICENSE).
 
 ---
 

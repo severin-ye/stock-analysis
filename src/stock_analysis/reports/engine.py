@@ -14,11 +14,11 @@ from typing import TypedDict
 
 from langgraph.graph import END, StateGraph
 
-from tools.runtime.report_engine.schema import StockReport
-from tools.runtime.report_engine.stages.render import render_to_file
-from tools.runtime.report_engine.stages.scaffold import scaffold
-from tools.runtime.report_engine.stages.search import run_search
-from tools.runtime.report_engine.stages.validate import validate
+from stock_analysis.reports.schema import StockReport
+from stock_analysis.reports.stages.render import render_to_file
+from stock_analysis.reports.stages.scaffold import scaffold
+from stock_analysis.reports.stages.search import run_search
+from stock_analysis.reports.stages.validate import validate
 
 BASE_DIR = Path(os.environ.get('STOCK_ANALYSIS_HOME', str(Path(__file__).resolve().parents[4])))
 LOG_DIR = BASE_DIR / '.sisyphus' / 'pipeline_logs'

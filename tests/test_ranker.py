@@ -1,5 +1,5 @@
-from tools.fetcher import PriceSnapshot
-from tools.ranker import (
+from stock_analysis.data.fetcher import PriceSnapshot
+from stock_analysis.ranking.greenblatt import (
     apply_cross_asset_scores,
     composite_to_score10,
     compute_crypto_ranking,

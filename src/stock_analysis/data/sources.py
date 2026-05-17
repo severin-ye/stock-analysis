@@ -13,7 +13,7 @@ import re
 from dataclasses import dataclass
 from pathlib import Path
 
-from tools.company_registry import ticker_to_stock_registry
+from stock_analysis.registry import ticker_to_stock_registry
 
 DATA_DIR = Path(__file__).parent.parent / 'data'
 COMPANIES_JSON = DATA_DIR / 'companies.json'

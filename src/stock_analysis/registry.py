@@ -15,7 +15,7 @@ import json
 from enum import Enum
 from pathlib import Path
 
-DATA_DIR = Path(__file__).parent.parent / 'data'
+DATA_DIR = Path(__file__).parent.parent.parent / 'data'
 COMPANIES_JSON = DATA_DIR / 'companies.json'
 
 

@@ -7,7 +7,7 @@
   - 特殊资产（BTC）通过 ModuleOverride 显式豁免
 
 用法:
-    from tools.runtime.report_engine.schema import StockReport, ModuleStatus, ModuleOverride
+    from stock_analysis.reports.schema import StockReport, ModuleStatus, ModuleOverride
 """
 from __future__ import annotations
 

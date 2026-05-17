@@ -5,8 +5,8 @@ import logging
 
 from langchain_openai import ChatOpenAI
 
-from tools.runtime.report_engine.config import get_llm_config
-from tools.runtime.report_engine.schema import ModuleStatus, StockReport
+from stock_analysis.reports.config import get_llm_config
+from stock_analysis.reports.schema import ModuleStatus, StockReport
 
 SCHEMA_HINT = """
 必须返回的 JSON 结构，所有字段名必须精确匹配（数值从上文真实数据区块取，此处仅为格式示例）:

@@ -12,7 +12,7 @@
 股市分析/
 ├── AGENTS.md              ← 本文件
 ├── index.html             ← 排名总览页（自动生成，由 tools/index_generator.py 驱动）
-├── stock_kit/              ← 核心引擎（Skill + Tool 分离）
+├── src/              ← 核心引擎（Skill + Tool 分离）
 │   ├── InvestSkill/        ← 方法论层（prompts、模板、静态资源；不放 Python 脚本）
 │   │   ├── _template.html  ← HTML 报告 CSS 主模板
 │   │   ├── prompts/        ← 20个分析框架（stock-eval, dcf-valuation...）
@@ -46,7 +46,7 @@ Skill (InvestSkill)         Tool (tools/)
 
 ```
 1. scaffold → 识别公司、初始化 StockReport 壳
-2. fetch    → 读 stock_kit/data/prices.json (LLM 用 webfetch 填充)
+2. fetch    → 读 src/data/prices.json (LLM 用 webfetch 填充)
 3. rank     → 纯 Python 计算四层排名 (无 LLM, 不幻觉)
 4. LLM      → 注入真实数据 + 预计算排名, LLM 仅生成叙述文本
 5. render   → Jinja2 模板渲染 HTML
@@ -92,7 +92,7 @@ Skill (InvestSkill)         Tool (tools/)
 - SOL staking/活跃 stake → Solana 官方 / Solscan / validators.app / Rated
 - BNB staking/地址活跃度 → BNB Chain 官方 / BscScan
 
-参见 `stock_kit/tools/market_data.py` 的 `DATA_SOURCE_MATRIX`、`STOCK_REGISTRY`、`CRYPTO_IDS` 和 URL 构造函数。
+参见 `src/stock_analysis/market_data.py` 的 `DATA_SOURCE_MATRIX`、`STOCK_REGISTRY`、`CRYPTO_IDS` 和 URL 构造函数。
 
 ### 输出格式
 - **百分比优先**：涨跌用 `+X%`/`-X%`，目标价辅助
@@ -102,7 +102,7 @@ Skill (InvestSkill)         Tool (tools/)
 - **HTML 报告**：8节（S1-S8+verdict），CSS 来自 `InvestSkill/_template.html`，评分区块替换为三层排名+F-Score卡
 - **HTML 验证（🚨 必须）**：每次生成/修改 HTML 报告后，**必须**运行验证：
   ```bash
-PYTHONPATH="stock_kit" python3 -c "
+PYTHONPATH="src" python3 -c "
 from tools.runtime.report_engine.stages.validate import validate_html_file
 passed, issues = validate_html_file('<报告路径>')
 print('OK' if passed else 'FAIL'); [print(f'  {i}') for i in issues]
@@ -161,20 +161,20 @@ cd /home/severin/Codelib/股市分析 && python3 -m http.server 8888
 # 访问 http://localhost:8888/index.html
 
 # 运行分析 Pipeline (dry-run 预览, 不调用 LLM)
-PYTHONPATH="stock_kit" python3 -m tools.pipeline 英伟达 --dry-run
+PYTHONPATH="src" python3 -m tools.pipeline 英伟达 --dry-run
 
 # 运行分析 Pipeline (完整, 调用 LLM)
-PYTHONPATH="stock_kit" python3 -m tools.pipeline 英伟达
+PYTHONPATH="src" python3 -m tools.pipeline 英伟达
 
 # 运行分析 Pipeline (备选: 通过 OpenCode Agent IPC 调用 LLM)
 # 仅当 opencode.jsonc 不可用时使用
-PYTHONPATH="stock_kit" python3 -m tools.pipeline 英伟达 --use-opencode-llm
+PYTHONPATH="src" python3 -m tools.pipeline 英伟达 --use-opencode-llm
 
 # 刷新公开数据 (yfinance 股票 + CoinGecko/DeFiLlama 加密基础数据, 无 AI 依赖)
-PYTHONPATH="stock_kit" python3 -c "from tools.fetcher import sync_public_data_to_json; sync_public_data_to_json()"
+PYTHONPATH="src" python3 -c "from tools.fetcher import sync_public_data_to_json; sync_public_data_to_json()"
 
 # 重新生成 index.html 排名总览（所有报告生成后必须执行）
-PYTHONPATH="stock_kit" python3 -m tools.pipeline index
+PYTHONPATH="src" python3 -m tools.pipeline index
 
 # HTML 验证
 python3 -m tools.pipeline validate <报告路径>
@@ -183,11 +183,11 @@ python3 -m tools.pipeline validate <报告路径>
 cd /home/severin/Codelib/股市分析 && git push origin main
 
 # 运行 InvestSkill 测试 (Node.js, upstream)
-cd "stock_kit/InvestSkill" && npm test
+cd "src/InvestSkill" && npm test
 
 # 运行 Python 验证 (本项目的核心测试)
-PYTHONPATH="stock_kit" python3 -m tools.pipeline validate <报告路径>
-PYTHONPATH="stock_kit" python3 -c "
+PYTHONPATH="src" python3 -m tools.pipeline validate <报告路径>
+PYTHONPATH="src" python3 -c "
 from tools.runtime.report_engine.stages.validate import validate_html_file
 passed, issues = validate_html_file('<报告路径>')
 print('OK' if passed else 'FAIL'); [print(f'  {i}') for i in issues]

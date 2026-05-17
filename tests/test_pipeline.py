@@ -2,9 +2,9 @@ import importlib
 from datetime import datetime
 from types import SimpleNamespace
 
-import tools.index_generator as index_generator
-import tools.pipeline as pipeline
-from tools.fetcher import PriceSnapshot
+import stock_analysis.generator as index_generator
+import stock_analysis.cli as pipeline
+from stock_analysis.data.fetcher import PriceSnapshot
 
 
 class _DummyLogger:
@@ -55,7 +55,7 @@ def test_run_analysis_regenerates_index_after_report_write(monkeypatch, tmp_path
         },
     )
     monkeypatch.setattr(pipeline, 'build_real_data_prompt', lambda *args, **kwargs: 'prompt')
-    monkeypatch.setattr(pipeline, 'run_llm_with_real_data', lambda report, prompt, logger: report)
+    monkeypatch.setattr(pipeline, 'run_llm_with_real_data', lambda report, prompt, logger, use_opencode_llm=False: report)
     monkeypatch.setattr(pipeline, 'apply_authoritative_report_data', lambda report, *args, **kwargs: report)
     monkeypatch.setattr(pipeline, 'apply_real_price_history', lambda report, *args, **kwargs: report)
 
@@ -67,10 +67,10 @@ def test_run_analysis_regenerates_index_after_report_write(monkeypatch, tmp_path
 
     monkeypatch.setattr(pipeline, 'render_to_file', fake_render_to_file)
 
-    fetcher = importlib.import_module('tools.fetcher')
+    fetcher = importlib.import_module('stock_analysis.data.fetcher')
     monkeypatch.setattr(fetcher, 'sync_public_data_to_json', lambda logger=None: None)
 
-    validate_module = importlib.import_module('tools.runtime.report_engine.stages.validate')
+    validate_module = importlib.import_module('stock_analysis.reports.stages.validate')
     monkeypatch.setattr(validate_module, 'validate', lambda report, html_path: (True, []))
 
     regenerate_calls = []

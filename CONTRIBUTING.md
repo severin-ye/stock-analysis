@@ -23,14 +23,14 @@ pip install -r requirements.txt -r requirements-dev.txt
 
 ```bash
 # 代码格式化与 lint
-ruff check stock_kit/tools/
-ruff format stock_kit/tools/
+ruff check src/tools/
+ruff format src/tools/
 
 # 类型检查
-mypy stock_kit/tools/
+mypy src/tools/
 
 # 运行测试
-PYTHONPATH="stock_kit" pytest stock_kit/tools/tests/ -v
+PYTHONPATH="src" pytest src/tools/tests/ -v
 ```
 
 ### 提交前必做
@@ -49,16 +49,16 @@ PYTHONPATH="stock_kit" pytest stock_kit/tools/tests/ -v
 
 ## 添加新公司
 
-1. 编辑 `stock_kit/data/companies.json`，添加 ticker 条目
+1. 编辑 `src/data/companies.json`，添加 ticker 条目
 2. 确保 `company_registry.py` 能正确派生所有映射
-3. 运行 `PYTHONPATH="stock_kit" python3 -m tools.pipeline <公司名> --dry-run` 验证
+3. 运行 `PYTHONPATH="src" python3 -m tools.pipeline <公司名> --dry-run` 验证
 4. 运行测试确认无回归
 
 ## 目录结构
 
 ```
 股市分析/
-├── stock_kit/              ← 核心引擎
+├── src/              ← 核心引擎
 │   ├── tools/              ← Python 运行时
 │   │   ├── pipeline.py     ← 主编排器
 │   │   ├── fetcher.py      ← 数据采集
@@ -80,7 +80,7 @@ PYTHONPATH="stock_kit" pytest stock_kit/tools/tests/ -v
 运行全部测试：
 
 ```bash
-PYTHONPATH="stock_kit" pytest stock_kit/tools/tests/ -v
+PYTHONPATH="src" pytest src/tools/tests/ -v
 ```
 
 ## 提交 Pull Request

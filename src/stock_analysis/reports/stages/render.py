@@ -11,7 +11,7 @@ from pathlib import Path
 
 from jinja2 import Environment, FileSystemLoader
 
-from tools.runtime.report_engine.schema import ChartType, StockReport
+from stock_analysis.reports.schema import ChartType, StockReport
 
 TEMPLATE_DIR = Path(__file__).parent.parent / 'templates'
 

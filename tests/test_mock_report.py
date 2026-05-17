@@ -2,7 +2,7 @@
 import os
 from pathlib import Path
 
-from tools.runtime.report_engine.schema import (
+from stock_analysis.reports.schema import (
     ActionType,
     ChartDataset,
     ChartDef,
@@ -24,8 +24,8 @@ from tools.runtime.report_engine.schema import (
     ValuationMethod,
     VerdictSection,
 )
-from tools.runtime.report_engine.stages.render import render, render_to_file
-from tools.runtime.report_engine.stages.scaffold import scaffold
+from stock_analysis.reports.stages.render import render, render_to_file
+from stock_analysis.reports.stages.scaffold import scaffold
 
 report = scaffold('英伟达')
 

@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from tools.runtime.report_engine.schema import StockReport
+from stock_analysis.reports.schema import StockReport
 
 BASE = Path(os.environ.get('STOCK_ANALYSIS_HOME', str(Path(__file__).resolve().parent.parent.parent.parent)))
 REPORT_DIRS = ['英伟达', '苹果', '特斯拉', '英特尔', 'AMD', '美光', '小米', '比特币']
@@ -243,7 +243,7 @@ def test_chart_count_matches(company):
 
 def test_schema_ranking_row():
     """验证 RankingRow 包含 4 层所有字段"""
-    from tools.runtime.report_engine.schema import RankingRow
+    from stock_analysis.reports.schema import RankingRow
     row = RankingRow(layer='L4', dimension='📈 增长值不值', metric='PEG',
                      value='0.66x', weight='10%', rank='#2/8',
                      verdict='<1, 划算')
@@ -271,7 +271,7 @@ def test_schema_layer_weights():
 
 def test_schema_fscore_validation():
     """F-Score items 必须有 9 条，每条的 score 是 0 或 1"""
-    from tools.runtime.report_engine.schema import FScoreItem
+    from stock_analysis.reports.schema import FScoreItem
 
     items = [
         FScoreItem(group='盈利', criterion='ROA > 0', score=1, reason='...'),
@@ -293,7 +293,7 @@ def test_schema_fscore_validation():
 
 def test_schema_charts_required():
     """验证图表 ID 不重复"""
-    from tools.runtime.report_engine.schema import ChartDef, ChartType
+    from stock_analysis.reports.schema import ChartDef, ChartType
     charts = [
         ChartDef(chart_id='priceChart', chart_type=ChartType.LINE, section_id='s3',
                  labels=['a', 'b'], datasets=[]),
@@ -315,7 +315,7 @@ def test_schema_charts_required():
 # ═══════════════════════════════════════
 
 def test_model_dump_json_converts_enums_to_strings():
-    from tools.runtime.report_engine.schema import (
+    from stock_analysis.reports.schema import (
         ChartDef,
         ChartType,
         SignalBlock,
@@ -354,7 +354,7 @@ def test_model_dump_json_converts_enums_to_strings():
 
 
 def test_model_dump_python_mode_keeps_enums():
-    from tools.runtime.report_engine.schema import ChartDef, ChartType
+    from stock_analysis.reports.schema import ChartDef, ChartType
     chart = ChartDef(chart_id='c', chart_type=ChartType.LINE, section_id='s3',
                      labels=[], datasets=[])
     d = chart.model_dump()
@@ -364,14 +364,14 @@ def test_model_dump_python_mode_keeps_enums():
 
 
 def test_chart_type_enum_values():
-    from tools.runtime.report_engine.schema import ChartType
+    from stock_analysis.reports.schema import ChartType
     assert ChartType.LINE == 'line'
     assert ChartType.BAR == 'bar'
     assert ChartType.RADAR == 'radar'
 
 
 def test_signal_enum_values():
-    from tools.runtime.report_engine.schema import (
+    from stock_analysis.reports.schema import (
         ActionType,
         ConfidenceType,
         ConvictionType,
@@ -393,7 +393,7 @@ def test_signal_enum_values():
 
 def test_render_integration(tmp_path):
     """用 mock 数据渲染 HTML 并验证关键元素"""
-    from tools.runtime.report_engine.schema import (
+    from stock_analysis.reports.schema import (
         ChartDataset,
         ChartDef,
         ChartType,
@@ -410,7 +410,7 @@ def test_render_integration(tmp_path):
         ValuationMethod,
         VerdictSection,
     )
-    from tools.runtime.report_engine.stages.render import render
+    from stock_analysis.reports.stages.render import render
 
     report = StockReport(
         ticker='TEST', company_name='测试公司', company_name_en='Test Corp',

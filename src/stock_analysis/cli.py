@@ -17,19 +17,19 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
-sys.path.insert(0, str(Path(__file__).parent.parent))
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
-from tools.company_registry import ticker_to_name_zh
-from tools.fetcher import YF_TICKER_MAP, PriceSnapshot, fetch_all_8, fetch_crypto_public, fetch_yfinance
-from tools.market_data import source_chain_summary
-from tools.ranker import (
+from stock_analysis.registry import ticker_to_name_zh
+from stock_analysis.data.fetcher import YF_TICKER_MAP, PriceSnapshot, fetch_all_8, fetch_crypto_public, fetch_yfinance
+from stock_analysis.data.sources import source_chain_summary
+from stock_analysis.ranking.greenblatt import (
     RankingResult,
     apply_cross_asset_scores,
     compute_crypto_ranking,
     compute_greenblatt,
     compute_pos_crypto_ranking,
 )
-from tools.runtime.report_engine.schema import (
+from stock_analysis.reports.schema import (
     AssetCategory,
     ChartDataset,
     ChartDef,
@@ -41,8 +41,8 @@ from tools.runtime.report_engine.schema import (
     StockReport,
     ValuationMethod,
 )
-from tools.runtime.report_engine.stages.render import render_to_file
-from tools.runtime.report_engine.stages.scaffold import scaffold
+from stock_analysis.reports.stages.render import render_to_file
+from stock_analysis.reports.stages.scaffold import scaffold
 
 BASE_DIR = Path(os.environ.get('STOCK_ANALYSIS_HOME', str(Path(__file__).resolve().parent.parent.parent)))
 LOG_DIR = BASE_DIR / '.sisyphus' / 'pipeline_logs'
@@ -105,7 +105,7 @@ def watch_report_outputs(
 ) -> None:
     output_dir = output_dir or (BASE_DIR / '分析输出')
     if regenerate_fn is None:
-        from tools.index_generator import regenerate as regenerate_fn
+        from stock_analysis.generator import regenerate as regenerate_fn
 
     if logger:
         logger.info(f'[watch] 开始监听: {output_dir}')
@@ -754,14 +754,14 @@ def run_llm_with_real_data(report: StockReport, real_data_prompt: str,
     """调用 LLM, 注入真实数据 — 无 SCHEMA_HINT 污染"""
     from langchain_openai import ChatOpenAI
 
-    from tools.runtime.report_engine.config import get_llm_config
+    from stock_analysis.reports.config import get_llm_config
 
     t0 = time.time()
 
     # 检查是否使用 OpenCode LLM IPC 模式
     opencode_client = None
     if use_opencode_llm:
-        from tools.opencode_llm_client import create_llm_client
+        from stock_analysis.llm_client import create_llm_client
         opencode_client = create_llm_client(use_opencode=True)
         if opencode_client:
             logger.info("  使用 OpenCode LLM IPC 模式（通过文件 + stdout 标记）")
@@ -923,7 +923,7 @@ def run_analysis(company_name: str, dry_run: bool = False, use_opencode_llm: boo
     # Stage 0.5: Auto-refresh prices.json before analysis
     logger.info("[Stage 0.5: refresh] 分析前自动刷新 prices.json 缓存")
     try:
-        from tools.fetcher import sync_public_data_to_json
+        from stock_analysis.data.fetcher import sync_public_data_to_json
         sync_public_data_to_json(logger=logger)
         logger.info("  ✅ 缓存刷新完成")
     except Exception as e:
@@ -1051,14 +1051,14 @@ def run_analysis(company_name: str, dry_run: bool = False, use_opencode_llm: boo
 
     # Stage 5: Validate
     logger.info("[Stage 5: validate] HTML 完整性检查")
-    from tools.runtime.report_engine.stages.validate import validate
+    from stock_analysis.reports.stages.validate import validate
     passed, issues = validate(report, html_path)
     logger.info(f"  通过: {'是' if passed else '否'}")
     for i in issues:
         logger.info(f"  [{i}]")
 
     try:
-        from tools.index_generator import regenerate
+        from stock_analysis.generator import regenerate
         regenerate()
         logger.info('[Stage 6: index] index.html 已根据分析输出重建')
     except Exception as e:
@@ -1086,7 +1086,7 @@ if __name__ == '__main__':
         print('  --use-opencode-llm    通过 IPC 调用 OpenCode Agent 的 LLM（而非直接 API）')
         sys.exit(1)
     if sys.argv[1] == 'index':
-        from tools.index_generator import regenerate
+        from stock_analysis.generator import regenerate
         regenerate()
         sys.exit(0)
     if sys.argv[1] == 'watch':
@@ -1100,7 +1100,7 @@ if __name__ == '__main__':
         if len(sys.argv) < 3:
             print('用法: python -m tools.pipeline validate <报告路径>')
             sys.exit(1)
-        from tools.runtime.report_engine.stages.validate import validate
+        from stock_analysis.reports.stages.validate import validate
         html_path = sys.argv[2]
         passed, issues = validate(None, html_path)
         print('✅ 通过' if passed else '❌ 未通过')

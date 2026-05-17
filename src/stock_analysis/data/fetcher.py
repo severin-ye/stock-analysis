@@ -18,7 +18,7 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Optional
 
-from tools.company_registry import (
+from stock_analysis.registry import (
     CRYPTO_ID_MAP,
     DEFILLAMA_CHAIN_MAP,
     name_zh_to_ticker,

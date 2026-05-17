@@ -8,7 +8,7 @@ import json
 import re
 from pathlib import Path
 
-from tools.runtime.report_engine.schema import StockReport
+from stock_analysis.reports.schema import StockReport
 
 
 def validate_schema(report: StockReport) -> list[str]:

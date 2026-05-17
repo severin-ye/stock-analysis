@@ -11,7 +11,7 @@
 
 from dataclasses import dataclass
 
-from tools.fetcher import PriceSnapshot
+from stock_analysis.data.fetcher import PriceSnapshot
 
 LAYER_WEIGHTS = {"L1": "40%", "L2": "25%", "L3": "25%", "L4": "10%"}
 NUMERIC_LAYER_WEIGHTS = {"L1": 0.40, "L2": 0.25, "L3": 0.25, "L4": 0.10}

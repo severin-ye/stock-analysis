@@ -11,8 +11,8 @@ import os
 from datetime import datetime
 from pathlib import Path
 
-from tools.company_registry import name_zh_to_tuple
-from tools.runtime.report_engine.schema import (
+from stock_analysis.registry import name_zh_to_tuple
+from stock_analysis.reports.schema import (
     ALL_MODULES,
     ModuleState,
     ModuleStatus,

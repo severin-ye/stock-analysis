@@ -2,10 +2,10 @@
 
 import pytest
 
-from tools.runtime.report_engine.schema import ChartDataset, ChartDef, ChartType
-from tools.runtime.report_engine.stages.render import render
-from tools.runtime.report_engine.stages.scaffold import scaffold
-from tools.runtime.report_engine.stages.validate import validate_schema
+from stock_analysis.reports.schema import ChartDataset, ChartDef, ChartType
+from stock_analysis.reports.stages.render import render
+from stock_analysis.reports.stages.scaffold import scaffold
+from stock_analysis.reports.stages.validate import validate_schema
 
 
 @pytest.fixture
