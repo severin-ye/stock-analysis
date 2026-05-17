@@ -94,6 +94,16 @@ python3 -m http.server 8888
 | 🔄 | **Auto Dashboard** | `index.html` auto-regenerates with cross-asset ranking overview. |
 | 🤖 | **OpenCode Native** | Plugin mode with IPC fallback. Direct API as default, `--use-opencode-llm` as fallback. |
 
+## Screenshots
+
+**Dashboard — Cross-Asset Ranking Overview**
+
+![Ranking Dashboard](assets/readme/ranking-overview.png)
+
+**Report — Apple (AAPL) Investment Analysis**
+
+![Apple Report](assets/readme/apple-report.png)
+
 ---
 
 ## The Ranking Formula
