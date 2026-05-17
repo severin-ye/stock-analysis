@@ -7,6 +7,7 @@
 别名 (如 "Solana"→"索拉纳") 在此模块处理，不污染 registry。
 """
 
+import os
 from pathlib import Path
 from datetime import datetime
 from tools.runtime.report_engine.schema import (
@@ -19,7 +20,7 @@ _ALIASES: dict[str, str] = {
     'Solana': '索拉纳',
 }
 
-BASE_DIR = Path('/home/severin/Codelib/股市分析')
+BASE_DIR = Path(os.environ.get('STOCK_ANALYSIS_HOME', str(Path(__file__).resolve().parents[5])))
 OUTPUT_DIR = BASE_DIR / '分析输出'
 
 

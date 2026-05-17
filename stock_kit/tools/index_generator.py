@@ -4,6 +4,7 @@
 """
 
 import json
+import os
 from pathlib import Path
 from datetime import datetime
 from tools.fetcher import fetch_all_8
@@ -12,7 +13,7 @@ from tools.company_registry import (
     ticker_to_name_zh, ticker_to_info, MARKET_GROUPS, registry,
 )
 
-BASE_DIR = Path('/home/severin/Codelib/股市分析')
+BASE_DIR = Path(os.environ.get('STOCK_ANALYSIS_HOME', str(Path(__file__).resolve().parent.parent.parent)))
 
 NAME_MAP: dict[str, str] = ticker_to_name_zh()
 TICKER_INFO: dict[str, tuple[str, str]] = ticker_to_info()

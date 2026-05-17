@@ -10,6 +10,7 @@
 
 import json
 import logging
+import os
 import re
 import sys
 import time
@@ -30,7 +31,7 @@ from tools.fetcher import fetch_all_8, fetch_yfinance, fetch_crypto_public, Pric
 from tools.market_data import source_chain_summary
 from tools.ranker import compute_greenblatt, compute_crypto_ranking, compute_pos_crypto_ranking, RankingResult, apply_cross_asset_scores
 
-BASE_DIR = Path('/home/severin/Codelib/股市分析')
+BASE_DIR = Path(os.environ.get('STOCK_ANALYSIS_HOME', str(Path(__file__).resolve().parent.parent.parent)))
 LOG_DIR = BASE_DIR / '.sisyphus' / 'pipeline_logs'
 LOG_DIR.mkdir(parents=True, exist_ok=True)
 

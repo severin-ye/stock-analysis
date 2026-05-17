@@ -10,7 +10,7 @@ import re
 from pathlib import Path
 from tools.runtime.report_engine.schema import StockReport
 
-BASE = Path('/home/severin/Codelib/股市分析')
+BASE = Path(os.environ.get('STOCK_ANALYSIS_HOME', str(Path(__file__).resolve().parent.parent.parent.parent)))
 REPORT_DIRS = ['英伟达', '苹果', '特斯拉', '英特尔', 'AMD', '美光', '小米', '比特币']
 REPORT_DATE = '260511'
 

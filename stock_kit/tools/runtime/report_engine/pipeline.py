@@ -4,6 +4,7 @@ LangGraph 编排 — 带详细日志
     python -m tools.runtime.report_engine.pipeline 小米
 """
 
+import os
 import sys
 import logging
 import time
@@ -19,7 +20,7 @@ from tools.runtime.report_engine.stages.search import run_search
 from tools.runtime.report_engine.stages.render import render_to_file
 from tools.runtime.report_engine.stages.validate import validate
 
-BASE_DIR = Path('/home/severin/Codelib/股市分析')
+BASE_DIR = Path(os.environ.get('STOCK_ANALYSIS_HOME', str(Path(__file__).resolve().parents[4])))
 LOG_DIR = BASE_DIR / '.sisyphus' / 'pipeline_logs'
 LOG_DIR.mkdir(parents=True, exist_ok=True)
 

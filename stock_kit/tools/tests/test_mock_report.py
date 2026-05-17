@@ -1,5 +1,7 @@
 """生成一份 mock NVDA 报告，验证模板输出"""
 import json
+import os
+from pathlib import Path
 
 from tools.runtime.report_engine.stages.scaffold import scaffold
 from tools.runtime.report_engine.stages.render import render, render_to_file
@@ -171,7 +173,7 @@ report.sidebar_dots = {f's{i}': 'bull' if i != 7 else 'bear' for i in range(1,9)
 
 # ── 渲染 ──
 html = render(report)
-output_path = '/home/severin/Codelib/股市分析/分析输出/英伟达/260511_测试报告.html'
+output_path = str(Path(os.environ.get('STOCK_ANALYSIS_HOME', str(Path(__file__).resolve().parent.parent.parent.parent))) / '分析输出' / '英伟达' / '260511_测试报告.html')
 render_to_file(report, output_path)
 
 sections_ok = all(f'id="s{i}"' in html for i in range(1, 9))
