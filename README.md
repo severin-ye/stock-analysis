@@ -1,271 +1,228 @@
-# 📊 综合投资分析报告
+<div align="center">
 
-基于 **Greenblatt 排名法** 的多市场深度投资分析系统：以美股为主，兼容港股、日股、韩股和加密资产。
+# 📊 Stock Analysis
 
-> 排名不是对公司优劣的判断，而是对 **"当前价格下值不值得买"** 的量化回答。
+**Multi-market investment analysis framework based on Greenblatt Ranking Methodology**
+
+[![CI](https://github.com/severin/stock-analysis/actions/workflows/ci.yml/badge.svg)](https://github.com/severin/stock-analysis/actions/workflows/ci.yml)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Code style: ruff](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
+
+[English](README.md) · [中文](README-zh.md)
+
+</div>
 
 ---
 
-## 快速开始
+## 🎯 What is this?
 
-### 1. 克隆仓库
+Stock Analysis is a **quantitative investment research framework** that ranks assets across multiple markets (US stocks, HK stocks, JP stocks, KR stocks, and crypto) using the proven [Greenblatt Magic Formula](https://en.wikipedia.org/wiki/Magic_formula_investing) enhanced with Piotroski F-Score and PEG ratio.
+
+> **Ranking > Scoring.** We don't ask "Is this a good company?" We ask **"At the current price, is this worth buying?"**
+
+### Key Design Principles
+
+- 🛡️ **Anti-hallucination**: All financial data is fetched in real-time; LLM only writes narrative text with pre-computed numbers
+- 🌍 **Multi-market**: Unified ranking across US/HK/JP/KR stocks and crypto assets
+- 📐 **Academic-backed**: Greenblatt's EBIT/EV + ROIC ranking, validated by research
+- 🔌 **Agent-native**: Designed as an OpenCode plugin with optional direct API fallback
+
+---
+
+## ✨ Features
+
+| Feature | Description |
+|---------|-------------|
+| 📈 **Four-Layer Ranking** | L1 EBIT/EV (40%) · L2 ROIC (25%) · L3 F-Score (25%) · L4 PEG (10%) |
+| 🌏 **Multi-Market Data** | Yahoo Finance, CoinGecko, DeFiLlama for stocks and crypto |
+| 🤖 **LLM-Augmented Reports** | HTML reports with structured sections, charts, and investment verdicts |
+| 🔄 **Real-time Ranking** | Auto-generated `index.html` with cross-asset comparison dashboard |
+| 🔒 **Anti-Hallucination** | LLM receives pre-computed data; cannot invent financial metrics |
+| 🧪 **Well-Tested** | 9 core tests covering data fetch, ranking math, and report validation |
+
+---
+
+## 🚀 Quick Start
+
+### Prerequisites
+
+- Python 3.12+
+- OpenCode configured with an LLM provider **(recommended)**
+
+### Installation
 
 ```bash
-git clone <仓库地址>
+git clone https://github.com/severin/stock-analysis.git
 cd stock-analysis
-```
-
-### 2. 安装依赖
-
-```bash
 pip install -r requirements.txt
 ```
 
-### 3. 配置 LLM API (如使用 OpenCode 可跳过)
+### Configuration
 
-本项目默认复用 OpenCode 的 LLM 配置。如果你已通过 OpenCode 配置了 LLM，**无需额外操作**。
+**If using OpenCode (recommended):**
+No extra configuration needed. The tool reads `~/.config/opencode/opencode.jsonc` automatically.
 
-仅在以下情况需要手动配置：
-- 不使用 OpenCode，直接命令行运行
-- CI/CD 环境
-- 需要覆盖 OpenCode 的模型选择
-
+**If running standalone:**
 ```bash
 cp .env.example .env
-# 编辑 .env，填入 LLM_API_KEY 和 LLM_BASE_URL
+# Edit .env with your LLM_API_KEY and LLM_BASE_URL
 ```
 
-### 4. 运行分析
+### Run Analysis
 
 ```bash
-# Dry-run（不调用 LLM，仅验证数据流）
-PYTHONPATH="src" python3 -m tools.pipeline 英伟达 --dry-run
+# Dry-run: fetch data + compute rankings without LLM
+PYTHONPATH="src" python3 -m stock_analysis.cli 英伟达 --dry-run
 
-# 完整分析（调用 LLM 生成报告）
-PYTHONPATH="src" python3 -m tools.pipeline 英伟达
-```
+# Full analysis: generates HTML report
+PYTHONPATH="src" python3 -m stock_analysis.cli 英伟达
 
-#### 备选：使用 OpenCode LLM IPC 模式
-
-> **注意**：这是退化/备选方案。推荐直接使用 OpenCode 配置（见上方"配置 LLM API"）。
-
-如果 OpenCode 配置文件不可用，或你希望 Pipeline 通过 **IPC**（进程间通信）让 OpenCode Agent 代为调用 LLM，可使用：
-
-```bash
-PYTHONPATH="src" python3 -m tools.pipeline 英伟达 --use-opencode-llm
-```
-
-**原理：**
-- Pipeline 将 prompt 写入 `.sisyphus/llm_requests/{id}.json`
-- 向 stdout 打印标记 `__OPENCODE_LLM_REQUEST__:{id}`
-- OpenCode Agent 捕获标记，调用 LLM 生成文本
-- 将结果写回 `.sisyphus/llm_responses/{id}.json`
-- Pipeline 读取响应并继续执行
-
-**适用场景：**
-- OpenCode 配置文件不可读（权限问题或配置格式不兼容）
-- 在受限制的环境中无法直接访问外部 API
-- 需要 OpenCode Agent 统一审计所有 LLM 调用
-
-### 5. 本地预览报告
-
-```bash
-cd stock-analysis && python3 -m http.server 8888
-# 访问 http://localhost:8888/index.html
-```
-
----
-
-## 为什么需要独立的 LLM 配置？
-
-本项目采用**双层架构**设计：
-
-```
-┌─────────────────────────────────────────────┐
-│  第一层: OpenCode Agent (推理决策层)          │
-│  · 决定分析哪家公司                           │
-│  · 调用 pipeline.py --dry-run (纯数据)       │
-│  · 检查报告完整性                             │
-└─────────────────────────────────────────────┘
-                        ↓ 注入真实数据
-┌─────────────────────────────────────────────┐
-│  第二层: 项目 Pipeline (报告生成层)           │
-│  · fetch: yfinance 抓真实价格                 │
-│  · rank: 纯数学计算排名 (无 LLM)             │
-│  · LLM: 仅润色中文叙述，所有数字已预计算       │
-│  · render: Jinja2 模板生成 HTML               │
-└─────────────────────────────────────────────┘
-```
-
-**为什么不让 OpenCode 直接生成整篇报告？**  
-因为 LLM 会**编造数据**（这是我们发现并修复的核心 bug）。项目 Pipeline 里的 LLM 只负责"把真实数字写成通顺的中文"，所有财务指标、排名、评分都是预先算好的，LLM 无法篡改。
-
-**默认复用 OpenCode 配置**  
-`config.py` 会首先尝试读取 `~/.config/opencode/opencode.jsonc`。只要 OpenCode 能工作，项目就能工作，**不需要额外配置**。`.env.example` 是给不用 OpenCode 的用户（CI/CD、命令行直接运行、其他 Agent 工具）准备的。
-
-**两种 LLM 调用方式：**
-- **主方案（推荐）**：Pipeline 直接读取 OpenCode 配置，直连 LLM API。这是默认行为，性能最好。
-- **备选方案**：通过 `--use-opencode-llm` 使用 IPC，让 OpenCode Agent 代为调用 LLM。仅在主方案不可用时使用（如配置不可读、网络受限）。
-
----
-
-## 界面预览
-
-### 排名总览页
-
-![投资标的综合排名总览](assets/readme/ranking-overview.png)
-
-首页聚合展示全部标的的综合排名、分市场分组和横向对比图，适合先看谁在当前价格下更值得继续深挖。
-
-### 个股报告页
-
-![苹果综合分析报告示例](assets/readme/apple-report.png)
-
-单页报告采用 8 个结构化章节，集中呈现估值、过去一年走势、护城河、风险分析和最终投资信号。
-
-
-
-## 方法论：四层加权排名体系 v3.0
-
-我们的核心理念是 **排名优于打分**。采用经典的 Greenblatt 魔法公式，并结合 Piotroski F-Score 和 PEG 估值，构建了四层加权排名体系：
-
-| 层级 | 维度 | 核心指标 | 权重 | 排序逻辑 |
-|:----:|------|----------|:----:|----------|
-| **L1** | 💰 便不便宜 | **EBIT/EV**（企业收益率） | **40%** | 越高越好 |
-| **L2** | 🏭 赚不赚钱 | **ROIC**（投入资本回报率） | **25%** | 越高越好 |
-| **L3** | 🛡️ 会不会崩 | **Piotroski F-Score**（0-9） | **25%** | 越高越安全 |
-| **L4** | 📈 增长值不值 | **PEG**（市盈增长比率） | **10%** | 越低越好 |
-
-### 综合推荐公式
-
-```
-综合分 = L1排名×0.40 + L2排名×0.25 + L3排名×0.25 + L4排名×0.10
-综合排名 = 综合分从小到大排序（分数越低，排名越靠前）
-```
-
-> **为什么 PEG 只占 10%？** 深度价值投资不以成长率为核心驱动。安全边际和基本面健康度才是首要考量。
-
-### 模型演进
-
-- **v1.0** — Greenblatt 原始公式：EBIT/EV + ROIC（两层）
-- **v2.0** — 加入 F-Score 作为安全验证（三层）
-- **v3.0** — 四层加权合成，PEG 纳入但权重最低（当前版本）
-
----
-
-## 如何使用
-
-### 本地预览
-
-```bash
-cd /home/severin/Codelib/股市分析
+# Preview reports
 python3 -m http.server 8888
+# Open http://localhost:8888/output/index.html
 ```
-
-打开浏览器访问：http://localhost:8888/index.html
-
-### 自动监听并重建首页
-
-```bash
-cd /home/severin/Codelib/股市分析
-source .venv/bin/activate
-PYTHONPATH="src" python3 -m tools.pipeline watch
-```
-
-该命令会轮询监听 分析输出 下的 HTML 报告新增、修改、删除和重命名；一旦检测到变化，就自动重建 index.html。
-
-### 数据来源
-
-所有数据均来自实时搜索，经至少两个来源交叉验证后方可使用：
-
-| 数据源 | 提供数据 |
-|--------|----------|
-| Google Finance / yfinance | 美股、港股、日股、韩股股价、PE、市值、52周高低、EPS、Beta |
-| StockAnalysis / MarketBeat | 美股 EV/EBIT、ROIC、Forward PEG、目标价、F-Score 交叉验证 |
-| Yahoo Finance / MarketScreener | 港股、日股、韩股 PB、Forward PE、目标价、共识、估值交叉验证 |
-| HKEXnews / EDINET / DART | 港股、日股、韩股官方财报、XBRL、现金流、负债、股本 |
-| 公司 IR | 所有市场的年报、季报、财报电话会、产能和业务数据 |
-| CoinGecko API | 加密货币价格、市值、成交量、供给 |
-| DeFiLlama API | 加密 TVL、Fees、Revenue |
-| mempool.space / blockchain.com | BTC 网络健康、交易、费用、算力辅助 |
-| LookIntoBitcoin / SoSoValue / Farside | BTC MVRV/NVT/周期、ETF AUM/flows |
-| beaconcha.in / Solscan / BscScan | ETH/SOL/BNB staking、验证者、地址活跃度 |
-
-跨市场原则：数据源状态只影响字段来源和缺失披露，不影响报告生成档位；非美股不得降级为聊天摘要。
 
 ---
 
-## 目录结构
+## 🏗️ Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    OpenCode Agent (You)                      │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐ │
+│  │  Decides    │  │  Calls      │  │  Reviews            │ │
+│  │  which stock│  │  pipeline   │  │  report quality     │ │
+│  │  to analyze │  │  --dry-run  │  │                     │ │
+│  └─────────────┘  └─────────────┘  └─────────────────────┘ │
+└─────────────────────────────────────────────────────────────┘
+                              │ injects real data
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│              Stock Analysis Pipeline (Python)                │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐ │
+│  │  fetch/     │  │  ranking/   │  │  reports/           │ │
+│  │  yfinance   │  │  greenblatt │  │  engine.py          │ │
+│  │  coingecko  │  │  pure math  │  │  jinja2 templates   │ │
+│  └─────────────┘  └─────────────┘  └─────────────────────┘ │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐ │
+│  │  data/      │  │  llm_client │  │  generator.py       │ │
+│  │  fetcher.py │  │  (optional  │  │  index.html         │ │
+│  │  sources.py │  │   IPC mode) │  │  dashboard          │ │
+│  └─────────────┘  └─────────────┘  └─────────────────────┘ │
+└─────────────────────────────────────────────────────────────┘
+                              │ writes
+                              ▼
+                    ┌──────────────────┐
+                    │   output/        │
+                    │   NVDA_report.html│
+                    │   index.html     │
+                    └──────────────────┘
+```
+
+### Why Two LLM Layers?
+
+| Layer | Role | LLM Usage |
+|-------|------|-----------|
+| **OpenCode Agent** | Decision-making | Chooses what to analyze, reviews output |
+| **Pipeline** | Report generation | Receives pre-computed data, writes narrative only |
+
+The Pipeline's LLM **cannot hallucinate financial data** because all numbers (price, PE, EBIT/EV, ROIC, F-Score) are computed before the LLM sees the prompt.
+
+---
+
+## 📁 Project Structure
 
 ```
 stock-analysis/
-├── README.md                 ← 你正在读的文件
 ├── src/
-│   ├── stock_analysis/       ← Python 核心包
-│   │   ├── cli.py            ← 命令行入口
-│   │   ├── data/             ← 数据采集 (fetcher, sources)
-│   │   ├── ranking/          ← 排名引擎 (greenblatt)
-│   │   ├── reports/          ← 报告生成 (schema, stages, templates)
-│   │   ├── registry.py       ← 公司注册表
-│   │   ├── generator.py      ← index.html 生成器
-│   │   └── llm_client.py     ← LLM 客户端
-│   └── investskill/          ← InvestSkill 框架 (prompts, templates)
-├── tests/                    ← 测试
-├── data/                     ← 公司数据 (companies.json)
-├── output/                   ← 生成报告
-├── docs/                     ← 文档
-├── assets/                   ← 静态资源
-└── .opencode/                ← Agent 知识库
+│   ├── stock_analysis/          # Core Python package
+│   │   ├── cli.py               # CLI entry point
+│   │   ├── data/                # Data fetching (yfinance, CoinGecko)
+│   │   ├── ranking/             # Greenblatt ranking engine
+│   │   ├── reports/             # Report generation (Jinja2)
+│   │   ├── registry.py          # Company registry (Single Source of Truth)
+│   │   ├── generator.py         # index.html dashboard generator
+│   │   └── llm_client.py        # LLM client with OpenCode IPC fallback
+│   └── investskill/             # Vendored upstream framework
+├── tests/                       # Test suite
+├── data/                        # Company metadata
+├── output/                      # Generated reports
+├── docs/                        # Documentation
+├── .opencode/                   # Agent knowledge base
+├── .github/workflows/           # CI/CD
+├── pyproject.toml               # Package configuration
+├── requirements.txt             # Runtime dependencies
+├── requirements-dev.txt         # Dev dependencies
+├── LICENSE                      # MIT License
+└── NOTICE                       # Third-party attributions
 ```
 
 ---
 
-## 输出格式
+## 🧪 Development
 
-每家公司/标的的分析报告包含以下内容：
+```bash
+# Install dev dependencies
+pip install -r requirements-dev.txt
 
-- **涨跌总览表** — 五维对比（涨跌比例 / 对应价格 / 概率权重 / 行业对比）
-- **四层排名表** — 各层指标数值、排名、投资判断
-- **Piotroski F-Score 明细卡** — 9 项财务健康指标逐项打分
-- **投资信号块** — 综合推荐等级与关键信号提示
+# Run linting
+ruff check src/ --exclude tests
 
-HTML 报告包含 8 个结构化章节（S1-S8），最终输出投资建议（Verdict）。
+# Run type checking
+mypy src/ --exclude tests --ignore-missing-imports
 
----
+# Run tests
+PYTHONPATH="src" pytest tests/ -v
+```
 
-## 特殊标的处理
-
-| 标的 | 适配方式 |
-|------|----------|
-| **比特币（BTC）** | L1 改用 MVRV Z-Score，L2 改用算力+网络强度，L3 使用链上改编版 F-Score，L4 参考减半周期位置 |
-| **港股（小米）** | 同一排名公式，标注跨市场估值差异 |
-| **困境反转股** | 使用 Non-GAAP Forward Estimate 计算 EBIT/EV 和 ROIC |
+See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
 
 ---
 
-## 技术栈
+## 📊 Methodology: Four-Layer Weighted Ranking v3.0
 
-- **分析框架**：[InvestSkill](https://github.com/yennanliu/invest-skill) v1.6.0（MIT License）
-- **报告渲染**：Chart.js 交互式 HTML 报告
-- **验证机制**：Python HTML 校验脚本（防 LLM 输出丢失）
-- **AI 驱动**：基于 LLM 的实时数据采集与结构化分析
+| Layer | Dimension | Core Metric | Weight | Sort Direction |
+|:-----:|-----------|-------------|:------:|----------------|
+| **L1** | 💰 Cheap? | **EBIT/EV** | **40%** | High → Low |
+| **L2** | 🏭 Profitable? | **ROIC** | **25%** | High → Low |
+| **L3** | 🛡️ Safe? | **Piotroski F-Score** | **25%** | High → Low |
+| **L4** | 📈 Growth? | **PEG** | **10%** | Low → High |
+
+**Composite Score** = L1_rank × 0.40 + L2_rank × 0.25 + L3_rank × 0.25 + L4_rank × 0.10
+
+Lower composite score = better investment opportunity.
+
+### Crypto Adaptation
+
+- **BTC**: MVRV Z-Score · Hash Rate · On-chain F-Score · Halving cycle
+- **PoS (ETH/SOL/BNB)**: MCap/TVL · Staking ratio · Crypto F-Score · Inflation rate
 
 ---
 
-## License
+## 🤝 Contributing
+
+We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for:
+- Setting up your development environment
+- Code style guidelines (ruff + mypy)
+- Testing requirements
+- Git commit conventions
+
+---
+
+## 📄 License
 
 MIT License — see [LICENSE](LICENSE).
 
-Based on InvestSkill v1.6.0 (MIT License, yennanliu) — see [src/InvestSkill/LICENSE](src/InvestSkill/LICENSE).
+Based on [InvestSkill](https://github.com/yennanliu/InvestSkill) v1.6.0 (MIT License, yennanliu) — see [src/investskill/LICENSE](src/investskill/LICENSE).
 
 ---
 
-## 注意事项
+## 🙏 Acknowledgments
 
-⚠️ **免责声明** — 本分析报告仅供参考，不构成任何投资建议。所有数据基于公开信息和模型分析，存在时效性和误差可能。投资有风险，决策需谨慎。
-
-⚠️ **数据时效性** — 所有股价和市场数据均为分析时点的实时数据，不会自动更新。如需最新判断，请重新运行分析。
-
----
-
-*最后更新：2026-05-11*
+- [yfinance](https://github.com/ranaroussi/yfinance) for real-time stock data
+- [Jinja2](https://jinja.palletsprojects.com/) for templating
+- [Pydantic](https://docs.pydantic.dev/) for data validation
+- [LangChain](https://python.langchain.com/) / [LangGraph](https://langchain-ai.github.io/langgraph/) for LLM orchestration
+- Joel Greenblatt for the Magic Formula investment methodology
+- Joseph Piotroski for the F-Score financial health score
