@@ -1,0 +1,283 @@
+{
+  "NVDA": {
+    "name_zh": "英伟达",
+    "name_en": "NVIDIA",
+    "exchange": "NASDAQ",
+    "gf_exchange": "NASDAQ",
+    "market": "US",
+    "sector": "半导体",
+    "asset_category": "stock",
+    "yf_ticker": "NVDA"
+  },
+  "AAPL": {
+    "name_zh": "苹果",
+    "name_en": "Apple",
+    "exchange": "NASDAQ",
+    "gf_exchange": "NASDAQ",
+    "market": "US",
+    "sector": "科技硬件",
+    "asset_category": "stock",
+    "yf_ticker": "AAPL"
+  },
+  "INTC": {
+    "name_zh": "英特尔",
+    "name_en": "Intel",
+    "exchange": "NASDAQ",
+    "gf_exchange": "NASDAQ",
+    "market": "US",
+    "sector": "半导体",
+    "asset_category": "stock",
+    "yf_ticker": "INTC"
+  },
+  "TSLA": {
+    "name_zh": "特斯拉",
+    "name_en": "Tesla",
+    "exchange": "NASDAQ",
+    "gf_exchange": "NASDAQ",
+    "market": "US",
+    "sector": "汽车/科技",
+    "asset_category": "stock",
+    "yf_ticker": "TSLA"
+  },
+  "AMD": {
+    "name_zh": "超微半导体",
+    "name_en": "AMD",
+    "exchange": "NASDAQ",
+    "gf_exchange": "NASDAQ",
+    "market": "US",
+    "sector": "半导体",
+    "asset_category": "stock",
+    "yf_ticker": "AMD"
+  },
+  "MU": {
+    "name_zh": "美光",
+    "name_en": "Micron",
+    "exchange": "NASDAQ",
+    "gf_exchange": "NASDAQ",
+    "market": "US",
+    "sector": "半导体",
+    "asset_category": "stock",
+    "yf_ticker": "MU"
+  },
+  "LLY": {
+    "name_zh": "礼来",
+    "name_en": "Eli Lilly",
+    "exchange": "NYSE",
+    "gf_exchange": "NYSE",
+    "market": "US",
+    "sector": "医药/生物科技",
+    "asset_category": "stock",
+    "yf_ticker": "LLY"
+  },
+  "AVGO": {
+    "name_zh": "博通",
+    "name_en": "Broadcom",
+    "exchange": "NASDAQ",
+    "gf_exchange": "NASDAQ",
+    "market": "US",
+    "sector": "半导体/基础设施软件",
+    "asset_category": "stock",
+    "yf_ticker": "AVGO"
+  },
+  "1810.HK": {
+    "name_zh": "小米",
+    "name_en": "Xiaomi",
+    "exchange": "HKEX",
+    "gf_exchange": "HKG",
+    "market": "HK",
+    "sector": "科技硬件",
+    "asset_category": "hk_stock",
+    "yf_ticker": "1810.HK",
+    "gf_code": "1810"
+  },
+  "0700.HK": {
+    "name_zh": "腾讯",
+    "name_en": "Tencent",
+    "exchange": "HKEX",
+    "gf_exchange": "HKG",
+    "market": "HK",
+    "sector": "互联网/游戏/金融科技",
+    "asset_category": "hk_stock",
+    "yf_ticker": "0700.HK",
+    "gf_code": "0700"
+  },
+  "9988.HK": {
+    "name_zh": "阿里巴巴",
+    "name_en": "Alibaba",
+    "exchange": "HKEX",
+    "gf_exchange": "HKG",
+    "market": "HK",
+    "sector": "电商/云计算",
+    "asset_category": "hk_stock",
+    "yf_ticker": "9988.HK",
+    "gf_code": "9988"
+  },
+  "3690.HK": {
+    "name_zh": "美团",
+    "name_en": "Meituan",
+    "exchange": "HKEX",
+    "gf_exchange": "HKG",
+    "market": "HK",
+    "sector": "本地生活/平台经济",
+    "asset_category": "hk_stock",
+    "yf_ticker": "3690.HK",
+    "gf_code": "3690"
+  },
+  "1211.HK": {
+    "name_zh": "比亚迪",
+    "name_en": "BYD",
+    "exchange": "HKEX",
+    "gf_exchange": "HKG",
+    "market": "HK",
+    "sector": "新能源汽车/电池",
+    "asset_category": "hk_stock",
+    "yf_ticker": "1211.HK",
+    "gf_code": "1211"
+  },
+  "2513.HK": {
+    "name_zh": "智谱",
+    "name_en": "Z.ai (Knowledge Atlas)",
+    "exchange": "HKEX",
+    "gf_exchange": "HKG",
+    "market": "HK",
+    "sector": "AI/大模型",
+    "asset_category": "hk_stock",
+    "yf_ticker": "2513.HK",
+    "gf_code": "2513"
+  },
+  "7203.T": {
+    "name_zh": "丰田",
+    "name_en": "Toyota Motor",
+    "exchange": "TYO",
+    "gf_exchange": "TYO",
+    "market": "JP",
+    "sector": "汽车/制造",
+    "asset_category": "stock",
+    "yf_ticker": "7203.T",
+    "gf_code": "7203"
+  },
+  "6758.T": {
+    "name_zh": "索尼",
+    "name_en": "Sony Group",
+    "exchange": "TYO",
+    "gf_exchange": "TYO",
+    "market": "JP",
+    "sector": "消费电子/娱乐",
+    "asset_category": "stock",
+    "yf_ticker": "6758.T",
+    "gf_code": "6758"
+  },
+  "9984.T": {
+    "name_zh": "软银集团",
+    "name_en": "SoftBank Group",
+    "exchange": "TYO",
+    "gf_exchange": "TYO",
+    "market": "JP",
+    "sector": "科技投资/通信",
+    "asset_category": "stock",
+    "yf_ticker": "9984.T",
+    "gf_code": "9984"
+  },
+  "000660.KS": {
+    "name_zh": "SK海力士",
+    "name_en": "SK Hynix",
+    "exchange": "KOSPI",
+    "gf_exchange": "KRX",
+    "market": "KR",
+    "sector": "半导体",
+    "asset_category": "stock",
+    "yf_ticker": "000660.KS",
+    "gf_code": "000660"
+  },
+  "005930.KS": {
+    "name_zh": "三星电子",
+    "name_en": "Samsung Electronics",
+    "exchange": "KOSPI",
+    "gf_exchange": "KRX",
+    "market": "KR",
+    "sector": "半导体/科技硬件",
+    "asset_category": "stock",
+    "yf_ticker": "005930.KS",
+    "gf_code": "005930"
+  },
+  "207940.KS": {
+    "name_zh": "三星生物制药",
+    "name_en": "Samsung Biologics",
+    "exchange": "KOSPI",
+    "gf_exchange": "KRX",
+    "market": "KR",
+    "sector": "CDMO/生物制药",
+    "asset_category": "stock",
+    "yf_ticker": "207940.KS",
+    "gf_code": "207940"
+  },
+  "005380.KS": {
+    "name_zh": "现代汽车",
+    "name_en": "Hyundai Motor",
+    "exchange": "KOSPI",
+    "gf_exchange": "KRX",
+    "market": "KR",
+    "sector": "汽车/制造",
+    "asset_category": "stock",
+    "yf_ticker": "005380.KS",
+    "gf_code": "005380"
+  },
+  "688256.SS": {
+    "name_zh": "寒武纪",
+    "name_en": "Cambricon Technologies",
+    "exchange": "SSE",
+    "gf_exchange": "SHA",
+    "market": "CN",
+    "sector": "AI芯片/半导体",
+    "asset_category": "stock",
+    "yf_ticker": "688256.SS",
+    "gf_code": "688256"
+  },
+  "BTC": {
+    "name_zh": "比特币",
+    "name_en": "Bitcoin",
+    "exchange": "Crypto",
+    "gf_exchange": "",
+    "market": "Crypto",
+    "sector": "加密货币",
+    "asset_category": "crypto",
+    "yf_ticker": "BTC-USD",
+    "crypto_id": "bitcoin"
+  },
+  "ETH": {
+    "name_zh": "以太坊",
+    "name_en": "Ethereum",
+    "exchange": "Crypto",
+    "gf_exchange": "",
+    "market": "Crypto",
+    "sector": "加密货币/L1",
+    "asset_category": "crypto",
+    "yf_ticker": "ETH-USD",
+    "crypto_id": "ethereum",
+    "defillama_chain": "Ethereum"
+  },
+  "SOL": {
+    "name_zh": "索拉纳",
+    "name_en": "Solana",
+    "exchange": "Crypto",
+    "gf_exchange": "",
+    "market": "Crypto",
+    "sector": "加密货币/L1",
+    "asset_category": "crypto",
+    "yf_ticker": "SOL-USD",
+    "crypto_id": "solana",
+    "defillama_chain": "Solana"
+  },
+  "BNB": {
+    "name_zh": "BNB",
+    "name_en": "BNB",
+    "exchange": "Crypto",
+    "gf_exchange": "",
+    "market": "Crypto",
+    "sector": "加密货币/L1",
+    "asset_category": "crypto",
+    "yf_ticker": "BNB-USD",
+    "crypto_id": "binancecoin",
+    "defillama_chain": "BSC"
+  }
+}

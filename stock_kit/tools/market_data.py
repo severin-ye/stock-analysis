@@ -6,13 +6,17 @@
   3. CoinGecko / DeFiLlama API 端点
   4. 币种汇率映射
 
-用法 (AI agent):
-  webfetch(GF_URL['NVDA']['NASDAQ']) → raw_text
-  parse_google_finance(raw_text, 'NASDAQ') → dict → 写入 prices.json
+公司映射从 company_registry 统一读取 (Single Source of Truth)。
 """
 
-from dataclasses import dataclass
+import json
 import re
+from dataclasses import dataclass
+from pathlib import Path
+from tools.company_registry import ticker_to_stock_registry
+
+DATA_DIR = Path(__file__).parent.parent / 'data'
+COMPANIES_JSON = DATA_DIR / 'companies.json'
 
 # ──────────────────────────────────────────
 # Google Finance URL 模板
@@ -28,35 +32,10 @@ EXCHANGE_TO_GF: dict[str, str] = {
     'TSE': 'TYO',
     'KOSPI': 'KRX',
     'KOSDAQ': 'KOSDAQ',
+    'SSE': 'SHA',
 }
 
-# 股票 → (GF code, exchange, market)
-STOCK_REGISTRY: dict[str, tuple[str, str, str]] = {
-    # 美股
-    'NVDA': ('NVDA', 'NASDAQ', 'US'),
-    'AAPL': ('AAPL', 'NASDAQ', 'US'),
-    'TSLA': ('TSLA', 'NASDAQ', 'US'),
-    'INTC': ('INTC', 'NASDAQ', 'US'),
-    'AMD': ('AMD', 'NASDAQ', 'US'),
-    'MU': ('MU', 'NASDAQ', 'US'),
-    'LLY': ('LLY', 'NYSE', 'US'),
-    'AVGO': ('AVGO', 'NASDAQ', 'US'),
-    # 港股
-    '1810.HK': ('1810', 'HKEX', 'HK'),
-    '0700.HK': ('0700', 'HKEX', 'HK'),
-    '9988.HK': ('9988', 'HKEX', 'HK'),
-    '3690.HK': ('3690', 'HKEX', 'HK'),
-    '1211.HK': ('1211', 'HKEX', 'HK'),
-    # 日股
-    '7203.T': ('7203', 'TSE', 'JP'),
-    '6758.T': ('6758', 'TSE', 'JP'),
-    '9984.T': ('9984', 'TSE', 'JP'),
-    # 韩股
-    '005930.KS': ('005930', 'KOSPI', 'KR'),
-    '000660.KS': ('000660', 'KOSPI', 'KR'),
-    '207940.KS': ('207940', 'KOSPI', 'KR'),
-    '005380.KS': ('005380', 'KOSPI', 'KR'),
-}
+STOCK_REGISTRY: dict[str, tuple[str, str, str]] = ticker_to_stock_registry()
 
 # 币种 → 符号/代码
 CURRENCY_MAP: dict[str, dict[str, str]] = {
@@ -64,6 +43,7 @@ CURRENCY_MAP: dict[str, dict[str, str]] = {
     'HK': {'symbol': 'HK$', 'code': 'HKD'},
     'JP': {'symbol': '¥', 'code': 'JPY'},
     'KR': {'symbol': '₩', 'code': 'KRW'},
+    'CN': {'symbol': '¥', 'code': 'CNY'},
 }
 
 
@@ -110,6 +90,13 @@ DATA_SOURCE_MATRIX: dict[str, list[SourceSpec]] = {
         SourceSpec('MarketScreener', 'https://www.marketscreener.com/search/?q={ticker}', ('price_target', 'consensus', 'enterprise_value', 'pb_ratio'), 3),
         SourceSpec('DART/OpenDART', 'https://englishdart.fss.or.kr/mainEng.do', ('xbrl', 'financial_statements', 'cash_flow', 'debt', 'equity'), 4, '英文披露仅辅助，韩文/XBRL 为准'),
         SourceSpec('Company IR', 'company investor relations', ('revenue', 'ebit', 'net_income', 'capex', 'shares'), 5),
+    ],
+    'CN': [
+        SourceSpec('Google Finance', GF_URL_TEMPLATE, ('price', 'market_cap', 'pe_ratio', 'week52_low', 'week52_high', 'eps', 'beta'), 1, 'SHA/SZ A股覆盖不如美股稳定'),
+        SourceSpec('yfinance', 'programmatic API', ('forward_pe', 'peg_ratio', 'enterprise_value', 'beta', 'financial_ratios'), 2, '688256.SS 返回完整 info + BS/IS/CF'),
+        SourceSpec('MarketScreener', 'https://www.marketscreener.com/search/?q={ticker}', ('price_target', 'consensus', 'enterprise_value', 'pb_ratio'), 3),
+        SourceSpec('巨潮资讯/CNInfo', 'https://www.cninfo.com.cn/', ('annual_report', 'interim_report', 'cash_flow', 'debt', 'equity'), 4, '证监会指定信息披露平台'),
+        SourceSpec('Company IR', 'cambricon.com investor relations', ('revenue', 'ebit', 'net_income', 'capex', 'shares'), 5),
     ],
     'CRYPTO_BTC': [
         SourceSpec('CoinGecko', 'https://api.coingecko.com/api/v3/coins/{coin_id}', ('price', 'market_cap', 'volume', 'circulating_supply', 'total_supply'), 1),
@@ -283,9 +270,10 @@ def build_defillama_fees_url(slug: str) -> str:
 
 EXCHANGE_RATES: dict[str, float] = {
     'USD': 1.0,
-    'HKD': 7.76,   # 1 USD ≈ 7.76 HKD (pegged)
-    'JPY': 143.0,  # approximate
-    'KRW': 1340.0, # approximate
+    'HKD': 7.76,
+    'JPY': 143.0,
+    'KRW': 1340.0,
+    'CNY': 7.25,
 }
 
 

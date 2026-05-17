@@ -1,5 +1,5 @@
 """
-Stock Kit Tools — 数据采集 + 排名计算 + 报告渲染
+stock_kit Tools — 数据采集 + 排名计算 + 报告渲染
 
 与 InvestSkill 的分工:
   · InvestSkill = 方法论 (prompt 框架, 评分体系, HTML 模板)

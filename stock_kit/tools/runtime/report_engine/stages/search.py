@@ -131,7 +131,7 @@ SCHEMA_HINT = """
 def run_search(report: StockReport, logger=None) -> StockReport:
     raise RuntimeError(
         "report_engine.stages.search 已禁用：该旧入口没有真实数据采集，禁止用 LLM 生成完整数值报告。"
-        "请使用: PYTHONPATH='Stock Kit:Stock Kit/InvestSkill' python3 -m tools.pipeline <公司名>"
+        "请使用: PYTHONPATH='stock_kit' python3 -m tools.pipeline <公司名>"
     )
 
     import time

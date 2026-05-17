@@ -2,10 +2,12 @@
 
 三层架构:
   1. yfinance: 纯 Python 获取价格/PE/市值 (全市场, 无需 AI)
-  2. JSON 缓存: Stock Kit/data/prices.json (yfinance 写入)
+  2. JSON 缓存: stock_kit/data/prices.json (yfinance 写入)
   3. 专业源: EBIT/EV, ROIC, F-Score, PEG → marketbeat/stockanalysis (仍由 AI webfetch 补充)
 
 返回 PriceSnapshot 字典，传给 ranker 和 LLM prompt。
+
+公司映射从 company_registry 统一读取 (Single Source of Truth)。
 """
 
 import json
@@ -17,6 +19,12 @@ from pathlib import Path
 from typing import Optional
 from datetime import datetime, timedelta
 
+from tools.company_registry import (
+    name_zh_to_ticker, ticker_to_name_zh,
+    yf_ticker_map, yf_stock_symbols,
+    CRYPTO_ID_MAP, DEFILLAMA_CHAIN_MAP,
+)
+
 try:
     import yfinance as yf
     HAS_YFINANCE = True
@@ -26,36 +34,8 @@ except ImportError:
 DATA_DIR = Path(__file__).parent.parent / 'data'
 PRICES_JSON = DATA_DIR / 'prices.json'
 
-# yfinance ticker → 内部 ticker 映射
-YF_TICKER_MAP: dict[str, str] = {
-    'NVDA': 'NVDA', 'AAPL': 'AAPL', 'TSLA': 'TSLA',
-    'INTC': 'INTC', 'AMD': 'AMD', 'MU': 'MU',
-    'LLY': 'LLY', 'AVGO': 'AVGO',
-    '0700.HK': '0700.HK',
-    '1810.HK': '1810.HK',
-    '9988.HK': '9988.HK', '3690.HK': '3690.HK', '1211.HK': '1211.HK',
-    '7203.T': '7203.T', '6758.T': '6758.T', '9984.T': '9984.T',
-    '005930.KS': '005930.KS', '000660.KS': '000660.KS',
-    '207940.KS': '207940.KS', '005380.KS': '005380.KS',
-    # 加密资产: Yahoo Finance 使用 XXX-USD 格式
-    'ETH-USD': 'ETH', 'BTC-USD': 'BTC', 'SOL-USD': 'SOL', 'BNB-USD': 'BNB',
-}
-
-# 哪些 ticker 走 yfinance (股票同步用，不含加密)
-YF_SYMBOLS = [k for k in YF_TICKER_MAP if k not in {'ETH-USD', 'BTC-USD', 'SOL-USD', 'BNB-USD'}]
-
-CRYPTO_ID_MAP: dict[str, str] = {
-    'BTC': 'bitcoin',
-    'ETH': 'ethereum',
-    'SOL': 'solana',
-    'BNB': 'binancecoin',
-}
-
-DEFILLAMA_CHAIN_MAP: dict[str, str] = {
-    'ETH': 'Ethereum',
-    'SOL': 'Solana',
-    'BNB': 'BSC',
-}
+YF_TICKER_MAP: dict[str, str] = yf_ticker_map()
+YF_SYMBOLS: list[str] = yf_stock_symbols()
 
 
 @dataclass
@@ -118,35 +98,13 @@ class PriceSnapshot:
             return None
 
 
-TICKER_MAP: dict[str, str] = {
-    '英伟达': 'NVDA',
-    '苹果': 'AAPL',
-    '特斯拉': 'TSLA',
-    '英特尔': 'INTC',
-    'AMD': 'AMD',
-    '美光': 'MU',
-    '小米': '1810.HK',
-    '比特币': 'BTC',
-    '礼来': 'LLY',
-    '腾讯': '0700.HK',
-    '阿里巴巴': '9988.HK',
-    '美团': '3690.HK',
-    '比亚迪': '1211.HK',
-    '丰田': '7203.T',
-    '索尼': '6758.T',
-    '软银集团': '9984.T',
-    'SK海力士': '000660.KS',
-    '三星电子': '005930.KS',
-    '三星生物制药': '207940.KS',
-    '现代汽车': '005380.KS',
-    '博通': 'AVGO',
-    '以太坊': 'ETH',
-    'Solana': 'SOL',
-    '索拉纳': 'SOL',
-    'BNB': 'BNB',
-}
+_ALIASES: dict[str, str] = {'Solana': '索拉纳'}
 
-TICKER_TO_NAME = {v: k for k, v in TICKER_MAP.items()}
+TICKER_MAP: dict[str, str] = name_zh_to_ticker()
+for alias, canonical in _ALIASES.items():
+    TICKER_MAP[alias] = TICKER_MAP.get(canonical, '')
+
+TICKER_TO_NAME: dict[str, str] = ticker_to_name_zh()
 
 
 def fetch_yfinance(symbols: list[str] | None = None, logger=None) -> dict[str, PriceSnapshot]:
@@ -169,7 +127,7 @@ def fetch_yfinance(symbols: list[str] | None = None, logger=None) -> dict[str, P
             info = yf.Ticker(sym).info
             internal_key = YF_TICKER_MAP.get(sym, sym)
             cur = info.get('currency', 'USD')
-            cur_symbol = {'USD': '$', 'HKD': 'HK$', 'JPY': '¥', 'KRW': '₩'}.get(cur, '$')
+            cur_symbol = {'USD': '$', 'HKD': 'HK$', 'JPY': '¥', 'KRW': '₩', 'CNY': '¥'}.get(cur, '$')
             price = info.get('currentPrice') or info.get('regularMarketPrice') or 0.0
             market_cap = info.get('marketCap')
             cap_str = ''
@@ -286,7 +244,7 @@ def _compute_financial_ratios(sym: str, price: float, logger=None) -> dict:
         ev = mkt_cap + (total_debt or 0) - (cash or 0)
 
         cur = info.get('currency', 'USD')
-        cur_sym = {'USD': '$', 'HKD': 'HK$', 'JPY': '¥', 'KRW': '₩'}.get(cur, '$')
+        cur_sym = {'USD': '$', 'HKD': 'HK$', 'JPY': '¥', 'KRW': '₩', 'CNY': '¥'}.get(cur, '$')
 
         def _fmt(v):
             if v is None:

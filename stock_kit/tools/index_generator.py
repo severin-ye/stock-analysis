@@ -1,56 +1,30 @@
-"""index.html 生成器 — 多市场统一排名 + 分市场榜"""
+"""index.html 生成器 — 多市场统一排名 + 分市场榜
+
+公司映射从 company_registry 统一读取 (Single Source of Truth)。
+"""
 
 import json
 from pathlib import Path
 from datetime import datetime
 from tools.fetcher import fetch_all_8
 from tools.ranker import compute_greenblatt, compute_crypto_ranking, compute_pos_crypto_ranking, apply_cross_asset_scores
+from tools.company_registry import (
+    ticker_to_name_zh, ticker_to_info, MARKET_GROUPS, registry,
+)
 
 BASE_DIR = Path('/home/severin/Codelib/股市分析')
 
-NAME_MAP: dict[str, str] = {
-    'NVDA': '英伟达', 'AAPL': '苹果', 'INTC': '英特尔', 'TSLA': '特斯拉',
-    'AMD': '超微半导体', 'MU': '美光', '1810.HK': '小米',
-    'LLY': '礼来', 'AVGO': '博通',
-    '000660.KS': 'SK海力士', '005930.KS': '三星电子',
-    '207940.KS': '三星生物制药', '005380.KS': '现代汽车',
-    '0700.HK': '腾讯', '9988.HK': '阿里巴巴', '3690.HK': '美团', '1211.HK': '比亚迪',
-    'BTC': '比特币', 'ETH': '以太坊',
-}
+NAME_MAP: dict[str, str] = ticker_to_name_zh()
+TICKER_INFO: dict[str, tuple[str, str]] = ticker_to_info()
 
-TICKER_INFO: dict[str, tuple[str, str]] = {
-    'NVDA': ('NASDAQ', '英伟达'), 'AAPL': ('NASDAQ', '苹果'),
-    'INTC': ('NASDAQ', '英特尔'), 'TSLA': ('NASDAQ', '特斯拉'),
-    'AMD': ('NASDAQ', '超微半导体'), 'MU': ('NASDAQ', '美光'),
-    'LLY': ('NYSE', '礼来'), 'AVGO': ('NASDAQ', '博通'),
-    '1810.HK': ('HKEX', '小米'), '0700.HK': ('HKEX', '腾讯'),
-    '9988.HK': ('HKEX', '阿里巴巴'), '3690.HK': ('HKEX', '美团'), '1211.HK': ('HKEX', '比亚迪'),
-    '000660.KS': ('KRX', 'SK海力士'), '005930.KS': ('KRX', '三星电子'),
-    '207940.KS': ('KRX', '三星生物制药'), '005380.KS': ('KRX', '现代汽车'),
-    'BTC': ('Crypto', '比特币'), 'ETH': ('Crypto', '以太坊'),
-}
-
-REPORT_NAMES: dict[str, str] = {
-    '英伟达': '分析输出/英伟达/260511_综合分析报告.html',
-    '苹果': '分析输出/苹果/260511_综合分析报告.html',
-    '特斯拉': '分析输出/特斯拉/260511_综合分析报告.html',
-    '英特尔': '分析输出/英特尔/260511_综合分析报告.html',
-    '超微半导体': '分析输出/超微半导体/260511_综合分析报告.html',
-    '美光': '分析输出/美光/260511_综合分析报告.html',
-    '礼来': '分析输出/礼来/260511_综合分析报告.html',
-    '博通': '分析输出/博通/260511_综合分析报告.html',
-    'SK海力士': '分析输出/SK海力士/260511_综合分析报告.html',
-    '三星电子': '分析输出/三星电子/260511_综合分析报告.html',
-    '三星生物制药': '分析输出/三星生物制药/260511_综合分析报告.html',
-    '现代汽车': '分析输出/现代汽车/260511_综合分析报告.html',
-    '小米': '分析输出/小米/260511_综合分析报告.html',
-    '腾讯': '分析输出/腾讯/260511_综合分析报告.html',
-    '阿里巴巴': '分析输出/阿里巴巴/260511_综合分析报告.html',
-    '美团': '分析输出/美团/260511_综合分析报告.html',
-    '比亚迪': '分析输出/比亚迪/260511_综合分析报告.html',
-    '比特币': '分析输出/比特币/260511_综合分析报告.html',
-    '以太坊': '分析输出/以太坊/260513_综合分析报告.html',
-}
+def _find_latest_report(name_zh: str) -> str | None:
+    report_dir = BASE_DIR / '分析输出' / name_zh
+    if not report_dir.is_dir():
+        return None
+    html_files = sorted(report_dir.glob('*_综合分析报告.html'))
+    if not html_files:
+        return None
+    return str(html_files[-1].relative_to(BASE_DIR))
 
 
 def has_report_for_ticker(ticker: str) -> bool:
@@ -58,11 +32,7 @@ def has_report_for_ticker(ticker: str) -> bool:
     report_dir = BASE_DIR / '分析输出' / name
     return report_dir.is_dir() and any(report_dir.glob('*.html'))
 
-MARKET_GROUP: dict[str, list[str]] = {
-    '🇺🇸 美股': ['NVDA', 'AAPL', 'INTC', 'TSLA', 'AMD', 'MU'],
-    '🇭🇰 港股': ['1810.HK', '0700.HK', '9988.HK', '3690.HK', '1211.HK'],
-    '₿ 加密': ['BTC', 'ETH'],
-}
+
 
 RANK_COLORS = {1: 'r1', 2: 'r2', 3: 'r3'}
 CHART_COLORS = ['#059669', '#10b981', '#34d399', '#f59e0b', '#f97316',
@@ -120,6 +90,9 @@ footer{text-align:center;padding:16px 0;font-size:11px;color:var(--muted)}
 </style>"""
 
 
+_CRYPTO_TICKERS = {'BTC', 'ETH', 'SOL', 'BNB'}
+
+
 def _card_html(name: str, ticker: str, exchange: str, rank_pos: int, total: int,
                score_10: float, score_color: str,
                metrics: list[tuple[str, str, str]],
@@ -158,7 +131,7 @@ def _build_stock_cards(sorted_stocks: list[tuple], total: int) -> list[str]:
         exchange = TICKER_INFO.get(ticker, ('', ''))[0]
         color = CHART_COLORS[(i - 1) % len(CHART_COLORS)]
         l1, l2, l3, l4 = rows[0], rows[1], rows[2], rows[3]
-        is_crypto = ticker in {'BTC', 'ETH', 'SOL', 'BNB'}
+        is_crypto = ticker in _CRYPTO_TICKERS
         metrics = [
             (l1.metric, l1.value, l1.rank),
             (l2.metric, l2.value, l2.rank),
@@ -202,7 +175,7 @@ def _build_market_section(label: str, tickers: list[str], all_rankings: list[tup
     for i, (ticker, comp, rank, s10, rows) in enumerate(market_items, 1):
         name = NAME_MAP.get(ticker, ticker)
         exchange = TICKER_INFO.get(ticker, ('', ''))[0]
-        is_crypto = (ticker in ('BTC', 'ETH'))
+        is_crypto = (ticker in _CRYPTO_TICKERS)
         color = CHART_COLORS[(i - 1) % len(CHART_COLORS)]
         if is_crypto:
             l1, l2, l3, l4 = rows[0], rows[1], rows[2], rows[3]
@@ -309,7 +282,7 @@ def generate() -> str:
     per_market_sections = []
     all_rankings_for_market = sorted_stocks.copy()
 
-    for label, tickers in MARKET_GROUP.items():
+    for label, tickers in MARKET_GROUPS.items():
         sec = _build_market_section(label, tickers, all_rankings_for_market)
         if sec:
             per_market_sections.append(sec)

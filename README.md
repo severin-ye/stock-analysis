@@ -66,7 +66,7 @@ python3 -m http.server 8888
 ```bash
 cd /home/severin/Codelib/股市分析
 source .venv/bin/activate
-PYTHONPATH="Stock Kit" python3 -m tools.pipeline watch
+PYTHONPATH="stock_kit" python3 -m tools.pipeline watch
 ```
 
 该命令会轮询监听 分析输出 下的 HTML 报告新增、修改、删除和重命名；一旦检测到变化，就自动重建 index.html。
@@ -101,7 +101,7 @@ PYTHONPATH="Stock Kit" python3 -m tools.pipeline watch
 ├── AGENTS.md                 ← AI Agent 内部知识库
 ├── assets/
 │   └── readme/               ← README 截图资源
-├── Stock Kit/
+├── stock_kit/
 │   ├── InvestSkill/          ← 分析框架核心（只保留 prompt、模板、文档等静态资产）
 │   └── tools/                ← 全部 Python 运行时代码与测试
 │       ├── pipeline.py

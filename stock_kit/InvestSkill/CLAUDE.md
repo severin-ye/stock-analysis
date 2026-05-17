@@ -23,7 +23,7 @@ jq empty .claude-plugin/marketplace.json
 
 InvestSkill is a **prompt-engineering plugin**, not traditional software. There is no application runtime — the "skills" are structured markdown frameworks that guide AI assistants through investment analysis workflows.
 
-> **本地扩展**: 本项目 (股市分析) 将全部 Python 运行时收口到 Stock Kit/tools/：顶层工具位于 `tools/*.py`，内部运行时模块位于 `tools/runtime/report_engine/`，测试位于 `tools/tests/`，用于自动化数据采集、排名计算和 HTML 生成。
+> **本地扩展**: 本项目 (股市分析) 将全部 Python 运行时收口到 stock_kit/tools/：顶层工具位于 `tools/*.py`，内部运行时模块位于 `tools/runtime/report_engine/`，测试位于 `tools/tests/`，用于自动化数据采集、排名计算和 HTML 生成。
 
 ### Skill Distribution Model
 
