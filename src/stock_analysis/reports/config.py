@@ -53,7 +53,7 @@ def load_config() -> dict:
     return result
 
 
-PREFERRED_LLM_ORDER = ["deepseek-v4-pro", "deepseek-v4-flash", "deepseek-v3.2", "qwen3.6-plus"]
+PREFERRED_LLM_ORDER = ["kimi-k2.6", "kimi-k2.5", "deepseek-v4-pro", "deepseek-v4-flash", "deepseek-v3.2", "qwen3.6-plus"]
 
 # 支持通过环境变量覆盖模型选择
 # 用法: export LLM_MODEL=kimi-k2 或 export LLM_MODEL=deepseek-v4-pro
